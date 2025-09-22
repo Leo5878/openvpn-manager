@@ -5,7 +5,7 @@ This library has **zero dependencies** – it only uses built-in Node.js modules
 All methods are easily replaceable with equivalents from other runtimes such as **Deno** or **Bun**.
 
 [Documention on russia](/readme.ru.md)
----
+
 
 ## Usage
 
@@ -35,7 +35,6 @@ const api = new OpenvpnApi(
 await api.connect();
 ```
 
----
 
 ## Events
 
@@ -53,12 +52,9 @@ event.on("client:connection", (data: Cl) => {
 | `client:list`       | `ClientList`       | Provides the current list of connected clients           |
 | `byte:count`        | `ByteCount`        | Provides client traffic statistics                       |
 
----
 
 ## Status
 
 Retrieves a list of connected clients, their IP addresses, and the date & time of their connection.
 For more details, see the official OpenVPN documentation:
 [OpenVPN Management Interface Documentation](https://openvpn.net/community-resources/management-interface/)
-
----
