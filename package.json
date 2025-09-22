@@ -1,0 +1,16 @@
+{
+  "name": "openvpn-manager",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:Leo5878/openvpn-manager.git",
+  "author": "<leonardo5878@yandex.ru>",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "jest": "^30.1.3",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@types/node": "^24.5.0"
+  }
+}
