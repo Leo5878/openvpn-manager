@@ -30,8 +30,8 @@ const api = new OpenvpnApi(
     statusInterval,     // Optional: interval for updating status
   }
 );
-
-// Connect to the OpenVPN server
+```
+```ts
 await api.connect();
 ```
 
