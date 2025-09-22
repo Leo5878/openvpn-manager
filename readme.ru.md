@@ -38,19 +38,14 @@ const api = new OpenvpnApi(
 ```ts
 await api.connect();
 ```
-```ts
-// example event
-event.on("client:connection", (data: Cl) => {
-    console.log(data);
-});
-```
+
 
 ## События
 
 Чтобы подписаться на события сервера, используйте переданный или собственный `EventEmitter`:
 
 ```ts
-event.on("client:connection", (data: Cl) => {
+event.on("client:connection", (data) => {
   console.log(data);
 });
 ```
