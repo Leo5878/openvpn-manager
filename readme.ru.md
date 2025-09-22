@@ -9,8 +9,6 @@
 [Документация на английском](/readme.md)
 
 
----
-
 ## Использование
 
 ```ts
@@ -36,10 +34,8 @@ const api = new OpenvpnApi(
 );
 
 // Подключение к серверу
-await api.connect();
+await api.connect();const event = new EventEmitter<CustomEventType>();
 ```
-
----
 
 ## События
 
@@ -56,8 +52,6 @@ event.on("client:connection", (data: Cl) => {
 | `client:connection` | `ClientConnection` | Событие о подключении клиента                   |
 | `client:list`       | `ClientList`       | Список подключённых клиентов                    |
 | `byte:count`        | `ByteCount`        | Информация о трафике клиента                    |
-
----
 
 ## Status
 
