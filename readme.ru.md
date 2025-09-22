@@ -32,9 +32,17 @@ const api = new OpenvpnApi(
     statusInterval,     // (опционально) период обновления статуса
   }
 );
+```
 
-// Подключение к серверу
-await api.connect();const event = new EventEmitter<CustomEventType>();
+Подключение к серверу
+```ts
+await api.connect();
+```
+```ts
+// example event
+event.on("client:connection", (data: Cl) => {
+    console.log(data);
+});
 ```
 
 ## События
