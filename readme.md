@@ -41,7 +41,7 @@ await api.connect();
 To listen for server events, subscribe via the provided (or your own) `EventEmitter`:
 
 ```ts
-event.on("client:connection", (data: Cl) => {
+event.on("client:connection", (data) => {
   console.log(data);
 });
 ```
