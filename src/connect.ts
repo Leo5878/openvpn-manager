@@ -13,9 +13,13 @@ export interface Connect {
   password?: string;
 }
 
+// TODO решить вопрос с оберткой
+type LoggerLike =
+  | { log: (...args: any[]) => void; info?: (...args: any[]) => void }
+  | { info: (...args: any[]) => void; log?: (...args: any[]) => void };
+
 export interface Logger {
   debug: (...args: any[]) => void;
-  info: (...args: any[]) => void;
   warn: (...args: any[]) => void;
   error: (...args: any[]) => void;
 }
@@ -26,9 +30,10 @@ export interface Options {
   logger?: Logger;
 }
 
-export function createDefaultLogger(): Logger {
+export function createDefaultLogger(): Logger & LoggerLike {
   return {
     info: console.log.bind(console),
+    log: console.log.bind(console),
     error: console.error.bind(console),
     warn: console.warn.bind(console),
     debug: console.debug.bind(console),
@@ -36,7 +41,7 @@ export function createDefaultLogger(): Logger {
 }
 
 export class OpenvpnCore {
-  private socket: Socket;
+  public socket: Socket;
   private openvpnServer: Connect;
   private prefixLog = "openvpn";
   protected reconnectTime: number = 10 * 1000; // milliseconds. 10 second
@@ -46,6 +51,9 @@ export class OpenvpnCore {
   protected reconnectRule: "always" | "never" | "manual";
   protected logger: Logger;
 
+  private readyResolver!: () => void;
+  public ready: Promise<void>;
+
   constructor(openVPNServer: Connect, emitter: EventEmitter, opts: Options) {
     this.openvpnServer = openVPNServer;
     this.emitter = emitter;
@@ -53,6 +61,10 @@ export class OpenvpnCore {
     this.debug = opts.debug ?? false;
     this.reconnectRule = opts.reconnect ?? "always";
     this.logger = opts.logger ?? createDefaultLogger();
+
+    this.ready = new Promise((resolve) => {
+      this.readyResolver = resolve;
+    });
   }
 
   public connect() {
@@ -68,7 +80,7 @@ export class OpenvpnCore {
       });
 
       this.socket.once("connect", () => {
-        this.logger.info(`${this.prefixLog} connected`);
+        // this.logger.info(`${this.prefixLog} connected`);
         // set handlers on socket
         this.reconnectTimeout = setTimeout(
           () => this.reconnect(),
@@ -76,6 +88,7 @@ export class OpenvpnCore {
         );
 
         this.setHandlers();
+        this.readyResolver();
         return resolve();
       });
     });
@@ -92,6 +105,10 @@ export class OpenvpnCore {
       });
 
       this.socket.on("data", (data: Buffer) => {
+        if (this.debug) {
+          console.log(data.toString());
+        }
+
         this.emitter.emit("data", data.toString());
       });
     } catch (e) {

@@ -18,8 +18,8 @@ import {
 } from "./parse";
 
 type EventKey = (typeof Event)[keyof typeof Event] & InternalEventMap;
-type Opts = {
-  event?: EventEmitter;
+export type Opts = {
+  emitter?: EventEmitter;
   statusInterval?: number;
   logger?: Logger;
 } & Options;
@@ -32,14 +32,17 @@ export class OpenvpnApi extends OpenvpnCore {
   private active: Set<string> = new Set<string>();
 
   constructor(openVPNServer: Connect, opts?: Opts) {
-    const emitter: EventEmitter = opts?.event ?? new EventEmitter();
+    const emitter: EventEmitter = opts?.emitter ?? new EventEmitter();
     super(openVPNServer, emitter, { logger: opts?.logger });
     // TODO убрать и оставить тот, что в connect
     this.eventEmitter = emitter;
     this.openVPNServer = openVPNServer;
 
     this.handleCommand();
-    this.getStatusUsersInterval(opts?.statusInterval ?? 5000);
+    this.ready.then(() => {
+      this.getStatusUsersInterval(opts?.statusInterval ?? 5000);
+    });
+
     this.dispatchDisconnectClient();
   }
 
@@ -75,6 +78,10 @@ export class OpenvpnApi extends OpenvpnCore {
 
   private handleCommand() {
     this.eventEmitter.on("data", (data: string) => {
+      if (this.debug) {
+        console.debug(data);
+      }
+
       const classify = classifyLog(data);
       this.handleClassifiedLine(classify);
 
@@ -158,7 +165,7 @@ export class OpenvpnApi extends OpenvpnCore {
   private parseClientList(listUser: string[][]) {
     try {
       this.active.clear();
-      const arrayList: Array<Cl> = [];
+      const arrayList = [];
 
       for (const item of listUser) {
         const data: Cl = {
@@ -250,3 +257,43 @@ export class OpenvpnApi extends OpenvpnCore {
     this.eventEmitter.removeAllListeners();
   }
 }
+
+// const event = new EventEmitter();
+// const api = new OpenvpnApi({
+//   id: "1",
+//   host: "127.0.0.1",
+//   port: 7505,
+//   timeout: 2000,
+// });
+// {
+// logger: Log() as unknown as Logger,
+// },
+// event,
+// );
+
+// api.connect().then((e) => e);
+// .catch((err) => {
+//   console.log(err);
+// });
+// api.handleComman
+
+// event.on("bytecount_cli", (data) => {
+//   console.log("bytecount_cli", data);
+// });
+
+// api.on("client:connection", (data) => {
+//   console.log("connection", data);
+// });
+//
+// api.on("client:list", (data) => {
+//   console.log("list", data);
+// });
+
+// api.on("client:disconnect", (data) => {
+//   console.log("disconnected", data);
+// });
+//
+// api.on("socket:error", (err) => {
+//   console.log(err);
+//   console.log(err);
+// });
