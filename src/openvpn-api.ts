@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { Event, InternalEvent } from "./Event";
-import { Logger, OpenvpnCore, Options } from "./connect";
+import { Logger, OpenvpnCore, Options } from "./core";
 import {
   ByteCount,
   Cl,
@@ -9,7 +9,7 @@ import {
   InternalEventMap,
   RawConnectionClient,
 } from "./event-responses.types";
-import { Connect } from "./connect";
+import { Connect } from "./core";
 import {
   ClassifiedLine,
   classifyLog,
