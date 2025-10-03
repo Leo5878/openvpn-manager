@@ -39,7 +39,7 @@ export class OpenvpnApi extends OpenvpnCore {
     this.openVPNServer = openVPNServer;
 
     this.handleCommand();
-    this.ready.then(() => {
+    void this.ready.then(() => {
       this.getStatusUsersInterval(opts?.statusInterval ?? 5000);
     });
 
@@ -165,7 +165,7 @@ export class OpenvpnApi extends OpenvpnCore {
   private parseClientList(listUser: string[][]) {
     try {
       this.active.clear();
-      const arrayList = [];
+      const arrayList: Cl[] = [];
 
       for (const item of listUser) {
         const data: Cl = {

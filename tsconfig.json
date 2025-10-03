@@ -1,24 +1,24 @@
 {
-    "compilerOptions": {
-      "module": "esnext",
-      "declaration": true,
-      "removeComments": false,
-      "emitDecoratorMetadata": true,
-      "experimentalDecorators": true,
-      "target": "esnext",
-      "sourceMap": false,
-      "outDir": "./dist",
-      "baseUrl": "./",
-      "noLib": false,
-      "noImplicitAny": false,
-      "skipLibCheck": true
-    },
-    "include": [
-      "lib/**/*"
-    ],
-    "exclude": [
-      "node_modules",
-      "*spec*",
-      "tests"
-    ]
+  "compilerOptions": {
+    "module": "esnext",
+    "declaration": true,
+    "removeComments": false,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "target": "esnext",
+    "sourceMap": false,
+    "outDir": "./dist",
+    "baseUrl": "./",
+    "noLib": false,
+    "noImplicitAny": false,
+    "skipLibCheck": true
+  },
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "*spec*",
+    "tests"
+  ]
 }

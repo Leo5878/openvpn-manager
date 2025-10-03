@@ -136,7 +136,7 @@ export interface EventMap {
   [Event.CLIENT_CONNECTION]: ConnectionClient;
   [Event.BYTECOUNT_CLI]: ByteCount;
   // List clients connected to openvpn server
-  [Event.CLIENT_LIST]: Cl;
+  [Event.CLIENT_LIST]: Cl[];
   [Event.ROUTING_TABLE]: void;
   [Event.SERVER_TIME]: void;
   [Event.CLIENT_DISCONNECTION]: string[];
