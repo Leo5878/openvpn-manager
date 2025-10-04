@@ -1,6 +1,7 @@
 import { Socket, createConnection } from "net";
 import { EventEmitter } from "node:events";
 import { Event } from "./Event";
+import { createDefaultLogger } from "./utls";
 
 // TODO переименовать файл в core
 
@@ -46,7 +47,7 @@ export class OpenvpnCore {
 
     this.debug = opts.debug ?? false;
     this.reconnectRule = opts.reconnect ?? "always";
-    this.logger = opts.logger;
+    this.logger = opts.logger ?? createDefaultLogger();
 
     this.ready = new Promise((resolve) => {
       this.readyResolver = resolve;
