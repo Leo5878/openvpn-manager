@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { Event, InternalEvent } from "./Event";
-import { Logger, OpenvpnCore, Options } from "./core";
+import { LoggerAdapter, OpenvpnCore, Options } from "./core";
 import {
   ByteCount,
   Cl,
@@ -21,7 +21,7 @@ type EventKey = (typeof Event)[keyof typeof Event] & InternalEventMap;
 export type Opts = {
   emitter?: EventEmitter;
   statusInterval?: number;
-  logger?: Logger;
+  logger?: LoggerAdapter;
 } & Options;
 
 export class OpenvpnApi extends OpenvpnCore {

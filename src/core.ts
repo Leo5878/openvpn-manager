@@ -13,12 +13,8 @@ export interface Connect {
   password?: string;
 }
 
-// TODO решить вопрос с оберткой
-type LoggerLike =
-  | { log: (...args: any[]) => void; info?: (...args: any[]) => void }
-  | { info: (...args: any[]) => void; log?: (...args: any[]) => void };
-
-export interface Logger {
+export interface LoggerAdapter {
+  info: (...args: any[]) => void;
   debug: (...args: any[]) => void;
   warn: (...args: any[]) => void;
   error: (...args: any[]) => void;
@@ -27,17 +23,7 @@ export interface Logger {
 export interface Options {
   debug?: boolean;
   reconnect?: "always" | "never" | "manual";
-  logger?: Logger;
-}
-
-export function createDefaultLogger(): Logger & LoggerLike {
-  return {
-    info: console.log.bind(console),
-    log: console.log.bind(console),
-    error: console.error.bind(console),
-    warn: console.warn.bind(console),
-    debug: console.debug.bind(console),
-  };
+  logger?: LoggerAdapter;
 }
 
 export class OpenvpnCore {
@@ -49,7 +35,7 @@ export class OpenvpnCore {
   protected reconnectTimeout!: NodeJS.Timeout;
   protected debug: boolean;
   protected reconnectRule: "always" | "never" | "manual";
-  protected logger: Logger;
+  protected logger: LoggerAdapter;
 
   private readyResolver!: () => void;
   public ready: Promise<void>;
@@ -60,7 +46,7 @@ export class OpenvpnCore {
 
     this.debug = opts.debug ?? false;
     this.reconnectRule = opts.reconnect ?? "always";
-    this.logger = opts.logger ?? createDefaultLogger();
+    this.logger = opts.logger;
 
     this.ready = new Promise((resolve) => {
       this.readyResolver = resolve;
