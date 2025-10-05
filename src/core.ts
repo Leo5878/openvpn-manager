@@ -3,8 +3,6 @@ import { EventEmitter } from "node:events";
 import { Event } from "./Event";
 import { createDefaultLogger } from "./utls";
 
-// TODO переименовать файл в core
-
 export interface Connect {
   id: string;
   host: string;
@@ -91,12 +89,21 @@ export class OpenvpnCore {
         this.socket.setKeepAlive(true);
       });
 
-      this.socket.on("data", (data: Buffer) => {
-        if (this.debug) {
-          console.log(data.toString());
-        }
+      let buffer = "";
+      const regex = /\r?\nEND\r?\n/;
 
-        this.emitter.emit("data", data.toString());
+      this.socket.on("data", (chunk: Buffer) => {
+        buffer += chunk.toString();
+
+        let match: RegExpExecArray | null;
+        while ((match = regex.exec(buffer)) !== null) {
+          const idx = match.index;
+          const block = buffer.slice(0, idx); // всё до END
+          buffer = buffer.slice(idx + match[0].length); // остаток после END
+
+          this.emitter.emit("data", block);
+          regex.lastIndex = 0; // сбрасываем, иначе regex.exec продолжит с позиции в старом buffer
+        }
       });
     } catch (e) {
       this.logger.error(e);
