@@ -133,12 +133,12 @@ export interface ConnectionClient extends Base {
   /** Server identifier provided by the client during library initialization. Internal value*/
   id: string;
 
-/**
- * Current connection status of the client.
- * Examples: "CONNECTED", "DISCONNECTED", "RECONNECTING".
- */
+  /**
+   * Current connection status of the client.
+   * Examples: "CONNECTED", "DISCONNECTED", "RECONNECTING".
+   */
   connection: string;
-  
+
   /** Number of active clients connected to this server. */
   n_clients: string;
 

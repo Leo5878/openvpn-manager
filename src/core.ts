@@ -61,6 +61,7 @@ export class OpenvpnCore {
 
     return new Promise<void>((resolve, reject) => {
       this.socket.once("error", (error: Error) => {
+        clearTimeout(managementHelloTimeout);
         return reject(error);
       });
 
@@ -82,8 +83,8 @@ export class OpenvpnCore {
             this.logger.info(
               `Connected to OpenVPN Management ${this.openvpnServer.id}`,
             );
-            clearTimeout(managementHelloTimeout);
 
+            clearTimeout(managementHelloTimeout);
             this.readyResolver();
             return resolve();
           }
@@ -96,6 +97,11 @@ export class OpenvpnCore {
         );
         // TODO Вынести таймер в .env
       }, 5000);
+
+      this.socket.on("close", () => {
+        this.logger.error("Connection closed");
+        clearTimeout(managementHelloTimeout);
+      });
     });
   }
 
