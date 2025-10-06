@@ -65,17 +65,37 @@ export class OpenvpnCore {
       });
 
       this.socket.once("connect", () => {
-        // this.logger.info(`${this.prefixLog} connected`);
-        // set handlers on socket
         this.reconnectTimeout = setTimeout(
           () => this.reconnect(),
           this.reconnectTime,
         );
 
         this.setHandlers();
-        this.readyResolver();
-        return resolve();
+
+        this.socket.once("data", (stream: string) => {
+          const managementHello = stream.toString();
+
+          // When connecting, OpenVPN should send a welcome message similar to:
+          // ">INFO:OpenVPN Management Interface".
+          // Only after receiving this message will OpenVPN respond to further commands.
+          if (managementHello.includes(">INFO:OpenVPN Management Interface")) {
+            this.logger.info(
+              `Connected to OpenVPN Management ${this.openvpnServer.id}`,
+            );
+            clearTimeout(managementHelloTimeout);
+
+            this.readyResolver();
+            return resolve();
+          }
+        });
       });
+
+      const managementHelloTimeout = setInterval(() => {
+        this.logger.error(
+          `The connection to the server ${JSON.stringify({ id: this.openvpnServer.id, addresses: this.openvpnServer.host + ":" + this.openvpnServer.port })} is busy`,
+        );
+        // TODO Вынести таймер в .env
+      }, 5000);
     });
   }
 
