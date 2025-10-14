@@ -85,9 +85,9 @@ const api = new OpenvpnManager(
 | `client:disconnect` | `ClientDisconnect` | Возвращается массив из CommonName (_планируется дополнить_)   |
 | `socket:error`      | `SocketError`      | Событие о возникновения ошибки с сокетом во время подключения |
 
-## Status
+## client:list
 
-Метод **status** возвращает информацию о подключённых клиентах:
+Событие **client:list** возвращает информацию о подключённых клиентах:
 
 * CN (имя клиента)
 * Реальный адрес (IP:порт)
