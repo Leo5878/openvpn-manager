@@ -124,7 +124,7 @@ It is global because it reports **all** messages received from OpenVPN.
 Example:
 
 ```ts
-api.on("client:connection", (client: ConnectionClient) => {
+api.on("data", (data: string) => {
   // Handle connected client
 });
 ```
