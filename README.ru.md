@@ -19,6 +19,7 @@ OpenVPN Management Interface. Она позволяет подключаться
 Создайте экземпляр `OpenvpnManager` и подключитесь к серверу:\
 О том как настроить OpenVPN Manager читайте [здесь](./docs/Openvpn-manager.md) или в [официальной документации OpenVPN](https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html#management-interface-options-177179)
 
+## Подключение
 ```ts
 // Инициализируем подключение к OpenVPN API
 const api = new OpenvpnManager(
@@ -34,6 +35,8 @@ const api = new OpenvpnManager(
 await api.connect();
 ```
 На этом этапе соединение с OpenVPN установлено.\
+
+## Получение событий
 Для получения событий подпишитесь на нужные события:
 ```ts
 // Подключившеся клиент
