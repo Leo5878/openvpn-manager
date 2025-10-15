@@ -112,7 +112,7 @@ Each command must end with `\r\n`.
 Example:
 
 ```ts
-this.writeSocket("status 2\r\n"); // <- \r\n is required at the end of each command
+api.writeSocket("status 2\r\n"); // <- \r\n is required at the end of each command
 ```
 
 To handle responses, subscribe to the global `data` event.
@@ -125,6 +125,6 @@ Example:
 
 ```ts
 api.on("data", (data: string) => {
-  // Handle connected client
+  // Handle data
 });
 ```
