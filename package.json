@@ -10,6 +10,9 @@
   },
   "url": "https://github.com/Leo5878/openvpn-manager",
   "author": "leonardo5878",
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "Apache-2.0",
   "devDependencies": {
     "@types/jest": "^30.0.0",
