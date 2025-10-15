@@ -9,7 +9,7 @@ The project is written in TypeScript, giving you static typing and IDE autocompl
 
 [Documentation in Russian](/README.ru.md)
 
-# Features
+## Features
 
 * Client connection and disconnection events
 * Retrieve the full list of active clients
@@ -17,6 +17,19 @@ The project is written in TypeScript, giving you static typing and IDE autocompl
 * Send commands to the OpenVPN server
 
 # Quick Start
+
+## install
+### npm
+```bash
+npm install @ad0nis/openvpn-manager`
+```
+
+### yarn
+```bash
+yarn add @ad0nis/openvpn-manager
+```
+
+---
 
 Create an instance of `OpenvpnManager` and connect to the server.
 To learn how to configure the OpenVPN Manager, see [this guide](./docs/Openvpn-manager.md) or the [official OpenVPN documentation](https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html#management-interface-options-177179).
@@ -51,7 +64,7 @@ api.once("client:list", (clients: Cl) => {
 
 A full list of available events can be found in the [Events](#events) section.
 
-# Constructor Options
+### Constructor Options
 
 Additional parameters available when creating an instance of `OpenvpnManager`:
 
@@ -79,7 +92,7 @@ const api = new OpenvpnManager(
 );
 ```
 
-# Events
+## Events
 
 All events and interfaces can be found in the [types file](https://github.com/Leo5878/openvpn-manager/blob/main/src/event-responses.types.ts)
 
@@ -91,7 +104,7 @@ All events and interfaces can be found in the [types file](https://github.com/Le
 | `client:disconnect` | `ClientDisconnect` | Returns an array of CommonName values (will be expanded) |
 | `socket:error`      | `SocketError`      | Socket error during connection                           |
 
-## Status
+### Status
 
 The **status** method returns information about connected clients:
 
@@ -103,7 +116,7 @@ The **status** method returns information about connected clients:
 
 For more details, see the [OpenVPN Management Interface Documentation](https://openvpn.net/community-resources/management-interface/)
 
-## Sending Commands
+### Sending Commands
 
 The `writeSocket` method allows sending raw commands directly to the OpenVPN Manager socket.
 This method performs no extra processing — it simply writes the provided string to the socket.

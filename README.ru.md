@@ -9,17 +9,28 @@ OpenVPN Management Interface. Она позволяет подключаться
 
 [Документация на английском](/README.md)
 
-# Возможности
+## Установка
+### npm
+```bash
+npm install @ad0nis/openvpn-manager`
+```
+
+### yarn
+```bash
+yarn add @ad0nis/openvpn-manager
+```
+
+## Возможности
 - События подключения и отключения клиентов
 - Получение полного списка активных подключений
 - Мониторинг трафика клиентов
 - Отправка команд на OpenVPN сервер
 
-# Быстрый старт
+## Быстрый старт
 Создайте экземпляр `OpenvpnManager` и подключитесь к серверу:\
 О том как настроить OpenVPN Manager читайте [здесь](./docs/Openvpn-manager.md) или в [официальной документации OpenVPN](https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html#management-interface-options-177179)
 
-## Подключение
+### Подключение
 ```ts
 // Инициализируем подключение к OpenVPN API
 const api = new OpenvpnManager(
@@ -36,7 +47,7 @@ await api.connect();
 ```
 На этом этапе соединение с OpenVPN установлено.
 
-## Получение событий
+### Получение событий
 Для получения событий подпишитесь на нужные события:
 ```ts
 // Подключившеся клиент
@@ -51,7 +62,7 @@ api.once("client:list", (clients: Cl) => {
 ```
 Полный список доступных событий приведён в разделе [События](#события)
 
-# Параметры конструктора
+## Параметры конструктора
 Дополнительные параметры, доступные при создании экземпляра `OpenvpnManager`:
 
 - `event` — собственный EventEmitter для обработки событий (по умолчанию создаётся внутренний эмиттер).
@@ -77,7 +88,7 @@ const api = new OpenvpnManager(
 );
 ```
 
-# События
+## События
 Все события и интерфейсы можно посмотреть в файле с [типами](https://github.com/Leo5878/openvpn-manager/blob/main/src/event-responses.types.ts)
 
 | Событие             | Тип                | Описание                                                      |
@@ -88,7 +99,7 @@ const api = new OpenvpnManager(
 | `client:disconnect` | `ClientDisconnect` | Возвращается массив из CommonName (_планируется дополнить_)   |
 | `socket:error`      | `SocketError`      | Событие о возникновения ошибки с сокетом во время подключения |
 
-## client:list
+### status
 
 Событие **client:list** возвращает информацию о подключённых клиентах:
 
