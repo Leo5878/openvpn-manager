@@ -1,6 +1,6 @@
 {
   "name": "@ad0nis/openvpn-manager",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "main": "dist/index.js",
   "type": "module",
   "description": "Provides an API for connecting to, sending commands to, and receiving messages from an OpenVPN management socket",
