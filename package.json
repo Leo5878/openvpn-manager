@@ -2,6 +2,7 @@
   "name": "@ad0nis/openvpn-manager",
   "version": "0.1.5",
   "main": "dist/index.js",
+  "license": "Apache-2.0",
   "type": "module",
   "description": "Provides an API for connecting to, sending commands to, and receiving messages from an OpenVPN management socket",
   "repository": {
@@ -13,11 +14,14 @@
   "publishConfig": {
     "access": "public"
   },
-  "license": "Apache-2.0",
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^24.5.0",
     "jest": "^30.1.3",
     "typescript": "^5.9.2"
+  },
+  "exports": {
+    ".": "./dist/index.js",
+    "./dist/openvpn-manager": "./dist/openvpn-manager.js"
   }
 }

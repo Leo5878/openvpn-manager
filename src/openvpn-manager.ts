@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
-import { Event, InternalEvent } from "./Event";
-import { LoggerAdapter, OpenvpnCore, Options } from "./core";
+import { Event, InternalEvent } from "./Event.js";
+import { LoggerAdapter, OpenvpnCore, Options } from "./core.js";
 import type {
   ByteCount,
   Cl,
@@ -8,14 +8,14 @@ import type {
   EventMap,
   InternalEventMap,
   RawConnectionClient,
-} from "./event-responses.types";
-import type { Connect } from "./core";
+} from "./event-responses.types.js";
+import type { Connect } from "./core.js";
 import {
   ClassifiedLine,
   classifyLog,
   parseClientMetadata,
   parseClientStatus,
-} from "./parse";
+} from "./parse.js";
 
 type EventKey = (typeof Event)[keyof typeof Event] & InternalEventMap;
 export type Opts = {

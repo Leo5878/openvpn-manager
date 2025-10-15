@@ -1,4 +1,4 @@
-import { LoggerAdapter } from "./core";
+import { LoggerAdapter } from "./core.js";
 
 export function createDefaultLogger(): LoggerAdapter {
   return {

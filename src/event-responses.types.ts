@@ -1,4 +1,4 @@
-import { Event, InternalEvent } from "./Event";
+import { Event, InternalEvent } from "./Event.js";
 
 export type CustomEventType = {
   [K in keyof EventMap]: [EventMap[K]];

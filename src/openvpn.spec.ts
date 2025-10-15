@@ -1,4 +1,4 @@
-import { classifyLog, parseClientStatus } from "./parse";
+import { classifyLog, parseClientStatus } from "./parse.js";
 
 describe("classifyLine", () => {
   const clients = `TITLE,OpenVPN 2.6.14 [git:makepkg/f588592ee6c6323b+] x86_64-pc-linux-gnu [SSL (OpenSSL)] [LZO] [LZ4] [EPOLL] [PKCS11] [MH/PKTINFO] [AEAD] [DCO] built on Apr  2 2025\r

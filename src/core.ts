@@ -1,7 +1,7 @@
 import { Socket, createConnection } from "net";
 import { EventEmitter } from "node:events";
-import { Event } from "./Event";
-import { createDefaultLogger } from "./utls";
+import { Event } from "./Event.js";
+import { createDefaultLogger } from "./utls.js";
 
 export interface Connect {
   id: string;
