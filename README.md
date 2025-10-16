@@ -7,6 +7,9 @@ The library relies only on the standard Node.js API.
 You can easily adapt the methods for other runtimes (Deno, Bun).
 The project is written in TypeScript, giving you static typing and IDE autocompletion.
 
+For seamless integration with NestJS, check out the wrapper:\
+👉 [openvpn-manager-nestjs](https://github.com/Leo5878/openvpn-manager-nestjs)
+
 [Documentation in Russian](/README.ru.md)
 
 ## Features
