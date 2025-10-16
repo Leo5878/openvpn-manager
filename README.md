@@ -21,7 +21,7 @@ The project is written in TypeScript, giving you static typing and IDE autocompl
 ## install
 ### npm
 ```bash
-npm install @ad0nis/openvpn-manager`
+npm install @ad0nis/openvpn-manager
 ```
 
 ### yarn

@@ -12,7 +12,7 @@ OpenVPN Management Interface. Она позволяет подключаться
 ## Установка
 ### npm
 ```bash
-npm install @ad0nis/openvpn-manager`
+npm install @ad0nis/openvpn-manager
 ```
 
 ### yarn
