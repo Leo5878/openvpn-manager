@@ -73,6 +73,7 @@ Additional parameters available when creating an instance of `OpenvpnManager`:
 
 * `event` — custom EventEmitter for event handling (by default, an internal emitter is created).
 * `logger` — logger for log management (by default, `console` is used).
+* `reconnect` — controls the behavior when the connection is lost. Defaults to always, which makes the client automatically reconnect. never disables automatic reconnection. Possible values: `always`, `never`.
 
 ```ts
 // Import helper for typing
