@@ -1,6 +1,6 @@
 {
   "name": "@ad0nis/openvpn-manager",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "main": "dist/index.js",
   "license": "Apache-2.0",
   "type": "module",

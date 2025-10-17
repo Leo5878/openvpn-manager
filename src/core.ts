@@ -29,7 +29,7 @@ export class OpenvpnCore {
   public socket: Socket;
   private openvpnServer: Connect;
   private prefixLog = "openvpn";
-  protected reconnectTime: number = 10 * 1000; // milliseconds. 10 second
+  protected reconnectTime: number = 10000; // milliseconds. 10 second
   protected emitter: EventEmitter;
   protected reconnectTimeout!: NodeJS.Timeout;
   protected debug: boolean;
@@ -37,6 +37,9 @@ export class OpenvpnCore {
   protected logger: LoggerAdapter;
 
   private readyResolver!: () => void;
+  private reconnectState: boolean = false;
+  private connecting: boolean = false;
+
   public ready: Promise<void>;
 
   constructor(openVPNServer: Connect, emitter: EventEmitter, opts: Options) {
@@ -53,29 +56,31 @@ export class OpenvpnCore {
   }
 
   public connect() {
+    if (this.connecting) {
+      this.logger.warn("Connection attempt skipped: already connecting or connected")
+      return Promise.resolve(); 
+    }
+
     this.socket = createConnection({
       host: this.openvpnServer.host,
       port: this.openvpnServer.port,
       timeout: this.openvpnServer.timeout,
     });
 
-    return new Promise<void>((resolve, reject) => {
+    this.connecting = true;
+
+    return new Promise<void>(async (resolve, reject) => {
       this.socket.once("error", (error: Error) => {
-        clearTimeout(managementHelloTimeout);
+        if (this.reconnectState) return;
         return reject(error);
       });
 
       this.socket.once("connect", () => {
-        this.reconnectTimeout = setTimeout(
-          () => this.reconnect(),
-          this.reconnectTime,
-        );
-
-        this.setHandlers();
-
+        this.logger.info("Socket connected")
+        
         this.socket.once("data", (stream: string) => {
           const managementHello = stream.toString();
-
+          
           // When connecting, OpenVPN should send a welcome message similar to:
           // ">INFO:OpenVPN Management Interface".
           // Only after receiving this message will OpenVPN respond to further commands.
@@ -83,8 +88,14 @@ export class OpenvpnCore {
             this.logger.info(
               `Connected to OpenVPN Management ${this.openvpnServer.id}`,
             );
-
+            
+            this.reconnectState = true;
+            // this.emitter.emit(Event.MANAGER_READY);
+            
             clearTimeout(managementHelloTimeout);
+            clearTimeout(this.reconnectTimeout);
+            
+            this.setHandlers();
             this.readyResolver();
             return resolve();
           }
@@ -92,14 +103,20 @@ export class OpenvpnCore {
       });
 
       const managementHelloTimeout = setInterval(() => {
-        this.logger.error(
-          `The connection to the server ${JSON.stringify({ id: this.openvpnServer.id, addresses: this.openvpnServer.host + ":" + this.openvpnServer.port })} is busy`,
+        this.logger.warn(
+          `Server ${JSON.stringify({ id: this.openvpnServer.id, addresses: this.openvpnServer.host + ":" + this.openvpnServer.port })} is busy with another connection`,
         );
         // TODO Вынести таймер в .env
       }, 5000);
 
-      this.socket.on("close", () => {
-        this.logger.error("Connection closed");
+      this.socket.once("close", () => {
+        this.logger.error("Socket closed");
+        this.connecting = false;
+
+        if (this.reconnectRule === "always" && this.reconnectState) {
+          this.reconnect();
+        }
+
         clearTimeout(managementHelloTimeout);
       });
     });
@@ -150,12 +167,20 @@ export class OpenvpnCore {
     }
   }
 
-  public reconnect() {
-    clearTimeout(this.reconnectTimeout); // clear current call to reconnect (to avoid stacking up)
-    this.reconnectTimeout = setTimeout(
-      () => this.reconnect(),
-      this.reconnectTime,
-    );
+  public async reconnect() {
+    const { host, port, id } = this.openvpnServer;
+    const timeUnit = this.reconnectTime >= 1000 ? `${this.reconnectTime / 1000}s` : 'ms';
+
+    this.logger.info(`Reconnecting to server ${this.openvpnServer.id} ${host}:${port} in ${timeUnit}`);
+    await new Promise<void>((resolve) => {
+      this.reconnectTimeout = setInterval(() => {
+          return resolve()
+        },
+        this.reconnectTime,
+      );
+    });
+
+    await this.connect();
   }
 
   /**

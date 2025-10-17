@@ -293,6 +293,7 @@ export interface EventMap {
   [Event.SERVER_TIME]: void;
   [Event.CLIENT_DISCONNECTION]: ClientDisconnect;
   [Event.SOCKET_ERROR]: SocketError;
+  [Event.MANAGER_READY]: void
 }
 
 export interface InternalEventMap extends EventMap {

@@ -19,6 +19,7 @@ export const Event = {
   // SOCKET_SHUTDOWN: "socket_shutdown",
   // SOCKET_CLOSE: "socket_close",
   // SOCKET_TIMEOUT: "socket_timeout",
+  MANAGER_READY: "manager:ready",
   // OpenVPN responses
   CLIENT_CONNECTION: "client:connection",
   BYTECOUNT_CLI: "bytecount:cli",
