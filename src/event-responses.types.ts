@@ -129,7 +129,7 @@ export interface RawConnectionClient {
 /**
  * Represents server-side initialization data sent by an OpenVPN or similar service.
  */
-export interface ConnectionClient<T = string> extends Base {
+export interface ConnectionEvent<T = string> extends Base {
   /** Server identifier provided by the client during library initialization. Internal value*/
   id: string;
 
@@ -285,7 +285,8 @@ export interface SocketError {
 
 export interface EventMap {
   // Event where client connection to openvpn server
-  [Event.CLIENT_CONNECTION]: ConnectionClient;
+  [Event.CLIENT_CONNECT]: ConnectionEvent;
+  [Event.CLIENT_ESTABLISHED]: ConnectionEvent
   [Event.BYTECOUNT_CLI]: ByteCount;
   // List clients connected to openvpn server
   [Event.CLIENT_LIST]: Cl[];
