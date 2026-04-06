@@ -1,9 +1,9 @@
 # OpenVPN Manager Wrapper
 
-OpenVPN Manager Wrapper — это легковесная TypeScript-библиотека без зависимостей, обеспечивающая удобный доступ к 
-OpenVPN Management Interface. Она позволяет подключаться к серверу, управлять клиентами и получать события в режиме реального времени.
+OpenVPN Manager Wrapper — это легковесная TypeScript-библиотека без зависимостей, обеспечивающая удобный доступ к
+OpenVPN Management Interface. Она позволяет подключаться к серверу, управлять клиентами, отправлять типизированные команды и получать события в режиме реального времени.
 
-Библиотека не имеет зависимостей – используется только стандартный функционал Node.js.
+Библиотека не имеет зависимостей — используется только стандартный функционал Node.js.
 Методы можно заменить на аналоги для других рантаймов (Deno, Bun).\
 Проект написан на TypeScript, поэтому вы получаете статическую типизацию и автодополнение в вашей IDE.
 
@@ -27,57 +27,54 @@ yarn add @ad0nis/openvpn-manager
 - События подключения и отключения клиентов
 - Получение полного списка активных подключений
 - Мониторинг трафика клиентов
-- Отправка команд на OpenVPN сервер
+- Типизированные async-команды с promise-based ответами
+- Обработка ошибок через `OpenvpnCommandError`
 
 ## Быстрый старт
-Создайте экземпляр `OpenvpnManager` и подключитесь к серверу:\
-О том как настроить OpenVPN Manager читайте [здесь](./docs/Openvpn-manager.md) или в [официальной документации OpenVPN](https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html#management-interface-options-177179)
+
+Создайте экземпляр `OpenvpnManager` и подключитесь к серверу.\
+О том как настроить OpenVPN Manager читайте [здесь](./docs/Openvpn-manager.md) или в [официальной документации OpenVPN](https://openvpn.net/community-docs/community-articles/openvpn-2-6-manual.html#management-interface-options-177179).
 
 ### Подключение
 ```ts
-// Инициализируем подключение к OpenVPN API
-const api = new OpenvpnManager(
-  {
-    id: "srv1",         // Идентификатор сервера (любая строка)
-    host: "127.0.0.1",  // Адрес до OpenVPN manager
-    port: 7505,         // Порт до OpenVPN manager
-    timeout: 5000,      // Таймаут подключения в ms (по умолчанию 5000)
-  },
-);
+const api = new OpenvpnManager({
+  id: "srv1",         // Идентификатор сервера (любая строка)
+  host: "127.0.0.1",  // Адрес до OpenVPN manager
+  port: 7505,         // Порт до OpenVPN manager
+  timeout: 5000,      // Таймаут подключения в ms (по умолчанию 5000)
+});
 
-// Подключение
 await api.connect();
 ```
+
 На этом этапе соединение с OpenVPN установлено.
 
 ### Получение событий
-Для получения событий подпишитесь на нужные события:
+
 ```ts
-// Подключившеся клиент
 api.on("client:connection", (client: ConnectionClient) => {
   // Обработка подключившегося клиента
-})
-    
-// Получение списка клиентов
+});
+
 api.once("client:list", (clients: Cl) => {
-    // Обработка списка клиентов. Метод сработает один раз
-})
+  // Обработка списка клиентов. Сработает один раз
+});
 ```
-Полный список доступных событий приведён в разделе [События](#события)
+
+Полный список доступных событий приведён в разделе [События](#события).
 
 ## Параметры конструктора
+
 Дополнительные параметры, доступные при создании экземпляра `OpenvpnManager`:
 
 - `event` — собственный EventEmitter для обработки событий (по умолчанию создаётся внутренний эмиттер).
 - `logger` — логгер для ведения логов (по умолчанию используется `console`).
-- `reconnect` — управляет поведением при разрыве соединения. По умолчанию always, что заставляет клиент автоматически переподключаться. Значение never отключает автоматическое переподключение. Возможные значения: `always`, `never`.
+- `reconnect` — управляет поведением при разрыве соединения. По умолчанию `always` — клиент автоматически переподключается. `never` отключает автоматическое переподключение. Возможные значения: `always`, `never`.
 
 ```ts
-// Импортируем хелпер для типизации
 import { CustomEventType } from "openvpn-manager/event-responses.types";
 
-// Создаём эмиттер
-const emmiter = new EventEmitter<CustomEventType>();
+const emitter = new EventEmitter<CustomEventType>();
 
 const api = new OpenvpnManager(
   {
@@ -87,26 +84,28 @@ const api = new OpenvpnManager(
     timeout: 5000,
   },
   {
-    event: emmiter, 	// Кастомный эмиттер событий
-    logger: console, 	// По умолчанию используется console. Можно передать собственный логгер
+    event: emitter,   // Кастомный эмиттер событий
+    logger: console,  // По умолчанию используется console
   }
 );
 ```
 
 ## События
+
 Все события и интерфейсы можно посмотреть в файле с [типами](https://github.com/Leo5878/openvpn-manager/blob/main/src/event-responses.types.ts)
 
-| Событие             | Тип                | Описание                                                      |
-|---------------------|--------------------|---------------------------------------------------------------|
-| `client:connection` | `ClientConnection` | Событие о подключении клиента                                 |
-| `client:list`       | `Cl`               | Список подключённых клиентов                                  |
-| `byte:count`        | `ByteCount`        | Информация о трафике клиента                                  |
-| `client:disconnect` | `ClientDisconnect` | Возвращается массив из CommonName (_планируется дополнить_)   |
-| `socket:error`      | `SocketError`      | Событие о возникновения ошибки с сокетом во время подключения |
+| Событие              | Тип                | Описание                                                               |
+|----------------------|--------------------|------------------------------------------------------------------------|
+| `client:connection`  | `ConnectionEvent`  | Клиент прошёл аутентификацию, сессия создаётся. Туннель ещё не активен |
+| `client:established` | `ConnectionEvent`  | Туннель полностью поднят, клиент готов к передаче трафика              |
+| `client:list`        | `Cl[]`             | Список подключённых клиентов                                           |
+| `bytecount:cli`      | `ByteCount`        | Информация о трафике клиента                                           |
+| `client:disconnect`  | `ClientDisconnect` | Возвращается массив из CommonName (_планируется дополнить_)            |
+| `socket:error`       | `SocketError`      | Событие о возникновении ошибки с сокетом во время подключения          |
 
-### status
+### client:list
 
-Событие **client:list** возвращает информацию о подключённых клиентах:
+Событие `client:list` возвращает информацию о подключённых клиентах:
 
 * CN (имя клиента)
 * Реальный адрес (IP:порт)
@@ -114,26 +113,146 @@ const api = new OpenvpnManager(
 * Объём входящего и исходящего трафика
 * Дата и время подключения
 
-Подробнее в официальной документации:
-[OpenVPN Management Interface Documentation](https://openvpn.net/community-resources/management-interface/)
+Подробнее в официальной документации: [OpenVPN Management Interface Documentation](https://openvpn.net/community-resources/management-interface/)
 
-## Отправка команд
-Метод writeSocket позволяет отправлять команды напрямую в сокет OpenVPN Manager.\
-Этот метод не выполняет дополнительной обработки данных, а просто передаёт строку команды. Каждая команда должна заканчиваться символами \r\n.
+## Команды
 
-Пример:
-```ts 
-this.writeSocket("status 2\r\n"); // <- \r\n - обязательно в конце каждой команды
-```
-Чтобы обработать ответ, подпишитесь на глобальное событие data.\
-Глобальное оно потому, что уведомляет
-о всех событиях, что приходят от OpenVPN.
-> [!NOTE]
-> Это "сырой" метод, он ничего не делает дополнительно, только пишет в сокет команду.
+`OpenvpnManager` предоставляет типизированные async-обёртки для наиболее распространённых команд OpenVPN Management Interface.
+Каждая команда возвращает промис и бросает `OpenvpnCommandError`, если OpenVPN ответил ошибкой.
 
-Пример:
+### Управление клиентами
+
 ```ts
-api.on("client:connection", (client: ConnectionClient) => {
-  // Обработка подключившегося клиента
-})
+// Отключить клиента по Common Name
+await api.killClientByCn("client-cn");
+
+// Отключить клиента по реальному адресу (ip:port)
+await api.killClientByAddress("1.2.3.4:12345");
+
+// Отключить клиента по числовому client ID (из client:list)
+await api.clientKill(42);
+await api.clientKill(42, "restart");
+
+// Одобрить аутентификацию клиента (при использовании --auth-user-pass-verify)
+await api.clientAuth(clientId, keyId);
+await api.clientAuthNt(clientId, keyId);
+
+// Отклонить аутентификацию клиента
+await api.clientDeny(clientId, keyId, "Access denied");
+await api.clientDeny(clientId, keyId, "Access denied", "Причина для клиента");
+```
+
+### Информация о сервере
+
+```ts
+// Получить версию OpenVPN и Management Interface
+const version = await api.getVersion();
+console.log(version.openvpnVersion);     // "OpenVPN 2.6.x ..."
+console.log(version.managementVersion);  // "5"
+
+// Получить PID процесса OpenVPN
+const { pid } = await api.getPid();
+console.log(pid); // 12345
+
+// Получить агрегированную статистику сервера (легче, чем status)
+const stats = await api.getLoadStats();
+console.log(stats.nClients);  // количество подключённых клиентов
+console.log(stats.bytesIn);
+console.log(stats.bytesOut);
+
+// Запросить список клиентов как промис
+const clients = await api.requestStatus();
+```
+
+### Мониторинг трафика
+
+```ts
+// Установить интервал отправки событий BYTECOUNT_CLI в секундах (0 — отключить)
+await api.setBytecount(5);
+```
+
+### Логирование
+
+```ts
+await api.enableLog();
+await api.disableLog();
+
+const lines = await api.getLog("all");
+const last10 = await api.getLog(10);
+
+await api.setVerbosity(4);
+await api.setMute(10);
+```
+
+### Сигналы
+
+```ts
+// Перечитать конфиг и переподключить всех клиентов
+await api.sendSignal("SIGHUP");
+
+// «Мягкий» рестарт (без закрытия tun-интерфейса)
+await api.sendSignal("SIGUSR1");
+
+// Вывести статистику в лог
+await api.sendSignal("SIGUSR2");
+
+// Завершить процесс
+await api.sendSignal("SIGTERM");
+```
+
+### Аутентификация
+
+```ts
+// Передать credentials в ответ на >PASSWORD:
+await api.sendAuth("Auth", "username", "password");
+
+// Установить поведение при ошибке аутентификации
+await api.setAuthRetry("nointeract");
+```
+
+### Hold
+
+Hold-режим заставляет OpenVPN приостановиться перед (пере)подключением и ждать команды `holdRelease`.
+Полезно, когда нужно подготовить credentials или убедиться, что ваше приложение готово до запуска туннеля.
+
+```ts
+await api.holdOn();
+
+// ... что-то делаем, например запрашиваем пароль у пользователя ...
+
+await api.holdRelease();
+```
+
+### Обработка ошибок
+
+Если OpenVPN отвечает ошибкой, команда бросает `OpenvpnCommandError`:
+
+```ts
+import { OpenvpnCommandError } from "@ad0nis/openvpn-manager";
+
+try {
+  await api.killClientByCn("nonexistent");
+} catch (e) {
+  if (e instanceof OpenvpnCommandError) {
+    console.error(e.message); // "common name 'nonexistent' not found"
+    console.error(e.raw);     // сырой ответ от OpenVPN
+  }
+}
+```
+
+### Низкоуровневый доступ
+
+Если нужно отправить команду, которой нет среди типизированных обёрток, используйте `writeSocket` напрямую:
+
+```ts
+api.writeSocket("custom-command\r\n"); // \r\n обязателен в конце
+```
+
+> [!NOTE]
+> `writeSocket` — низкоуровневый метод. Он не интегрируется с очередью команд, ответ нужно обрабатывать через событие `data`.
+
+```ts
+api.on("data", (data: string) => {
+  // Сырые данные от OpenVPN
+});
 ```
