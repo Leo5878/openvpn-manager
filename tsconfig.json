@@ -11,13 +11,13 @@
     "sourceMap": false,
     "outDir": "./dist",
     "baseUrl": "./",
-    "rootDir": "src",
+    // "rootDir": "src",
     "noLib": false,
     "noImplicitAny": false,
     "skipLibCheck": true
   },
   "include": [
-    "src/**/*"
+    "src/**/*", "test/**/*"
   ],
   "exclude": [
     "node_modules",

@@ -16,6 +16,7 @@ import {
   parseClientMetadata,
   parseClientStatus,
 } from "./parse.js";
+import { OpenvpnCommands } from "./openvpn-commands.js";
 
 type EventKey = (typeof Event)[keyof typeof Event] & InternalEventMap;
 export type Opts = {
@@ -24,7 +25,7 @@ export type Opts = {
   logger?: LoggerAdapter;
 } & Options;
 
-export class OpenvpnManager extends OpenvpnCore {
+export class OpenvpnManager extends OpenvpnCommands {
   private eventEmitter: EventEmitter;
   private openVPNServer: Connect;
   private getStatusInterval: NodeJS.Timeout;
@@ -104,7 +105,7 @@ export class OpenvpnManager extends OpenvpnCore {
           this.establishedClient(await this.processClient(classify.raw));
           break;
         case "CONNECT":
-            this.connectClient(await this.processClient(classify.raw));
+          this.connectClient(await this.processClient(classify.raw));
           break
         case "CLIENT_DISCONNECT":
           this.logger.debug("write socket status. Is event disconnected");
@@ -253,21 +254,22 @@ export class OpenvpnManager extends OpenvpnCore {
   public async connectClient(client: ConnectionEvent) {
     this.eventEmitter.emit(Event.CLIENT_CONNECT, client);
   }
-  
+
   public async establishedClient(client: ConnectionEvent) {
     this.active.add(client.commonName);
     this.eventEmitter.emit(Event.CLIENT_ESTABLISHED, client);
   }
 
-private async processClient(raw: string) {
-  return this.prePreccessEnv(parseClientMetadata(raw));
-}
+  private async processClient(raw: string) {
+    return this.prePreccessEnv(parseClientMetadata(raw));
+  }
 
   /**
    * Метод завершает корректно работу всех таймеров, слушателей и сокетов
    */
   public async shutdown() {
     clearTimeout(this.getStatusInterval);
+    this.writeSocket("quit\r\n");
     await this.endSocket();
     this.eventEmitter.removeAllListeners();
   }

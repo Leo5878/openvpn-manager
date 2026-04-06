@@ -58,7 +58,7 @@ export class OpenvpnCore {
   public connect() {
     if (this.connecting) {
       this.logger.warn("Connection attempt skipped: already connecting or connected")
-      return Promise.resolve(); 
+      return Promise.resolve();
     }
 
     this.socket = createConnection({
@@ -77,10 +77,10 @@ export class OpenvpnCore {
 
       this.socket.once("connect", () => {
         this.logger.info("Socket connected")
-        
+
         this.socket.once("data", (stream: string) => {
           const managementHello = stream.toString();
-          
+
           // When connecting, OpenVPN should send a welcome message similar to:
           // ">INFO:OpenVPN Management Interface".
           // Only after receiving this message will OpenVPN respond to further commands.
@@ -88,13 +88,13 @@ export class OpenvpnCore {
             this.logger.info(
               `Connected to OpenVPN Management ${this.openvpnServer.id}`,
             );
-            
+
             this.reconnectState = true;
             // this.emitter.emit(Event.MANAGER_READY);
-            
+
             clearTimeout(managementHelloTimeout);
             clearTimeout(this.reconnectTimeout);
-            
+
             this.setHandlers();
             this.readyResolver();
             return resolve();
@@ -125,7 +125,7 @@ export class OpenvpnCore {
   public setHandlers() {
     try {
       if (!this.socket) {
-        throw new Error("Socket is not defined");
+        throw new Error("Socket is undefined");
       }
 
       this.socket.once("connect", () => {
@@ -138,18 +138,34 @@ export class OpenvpnCore {
       this.socket.on("data", (chunk: Buffer) => {
         buffer += chunk.toString();
 
+        const lines = buffer.split("\n");
+        buffer = lines.pop() ?? ""; // последняя незавершённая строка остаётся в буфере
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          if (trimmed.startsWith("SUCCESS:") || trimmed.startsWith("ERROR:")) {
+            this.emitter.emit("data", trimmed);
+            continue;
+          }
+
+          // Блочные ответы собираем обратно и ищем END
+          buffer = trimmed + "\n" + buffer;
+        }
+
+        // Блочные ответы (status 2, version, log)
         let match: RegExpExecArray | null;
         while ((match = regex.exec(buffer)) !== null) {
-          const idx = match.index;
-          const block = buffer.slice(0, idx); // всё до END
-          buffer = buffer.slice(idx + match[0].length); // остаток после END
-
+          const block = buffer.slice(0, match.index);
+          buffer = buffer.slice(match.index + match[0].length);
           this.emitter.emit("data", block);
-          regex.lastIndex = 0; // сбрасываем, иначе regex.exec продолжит с позиции в старом buffer
+          regex.lastIndex = 0;
         }
       });
     } catch (e) {
       this.logger.error(e);
+      throw e
     }
   }
 
@@ -174,10 +190,8 @@ export class OpenvpnCore {
     this.logger.info(`Reconnecting to server ${this.openvpnServer.id} ${host}:${port} in ${timeUnit}`);
     await new Promise<void>((resolve) => {
       this.reconnectTimeout = setInterval(() => {
-          return resolve()
-        },
-        this.reconnectTime,
-      );
+        return resolve()
+      }, this.reconnectTime);
     });
 
     await this.connect();
@@ -206,12 +220,11 @@ export class OpenvpnCore {
    */
   public endSocket(): Promise<void> {
     return new Promise((resolve) => {
+      this.reconnectState = false
       if (this.socket) {
-        this.socket.end(() => {
+        return this.socket.end(() => {
           resolve();
         });
-      } else {
-        resolve();
       }
     });
   }
