@@ -1,4 +1,5 @@
-type Event = "CLIENT_CONNECTED" | "BYTECOUNT_CLI" | "CLIENT_LIST";
+type Event = "ESTABLISHED" | "CONNECT" | "BYTECOUNT_CLI" | "CLIENT_LIST";
+
 export type ClassifiedLine =
   | { type: "data"; event: Event; raw: string }
   | { type: "event"; event: Event; raw: string }
@@ -9,7 +10,7 @@ export function classifyLog(event: string): ClassifiedLine {
   const eventReg = new RegExp(/>\w+:ENV/);
 
   if (eventReg.test(event)) {
-    return { type: "event", event: "CLIENT_CONNECTED", raw: event };
+    return { type: "event", event: "ESTABLISHED", raw: event };
   }
 
   if (event.includes(">BYTECOUNT_CLI")) {
@@ -24,13 +25,17 @@ export function classifyLog(event: string): ClassifiedLine {
     return { type: "data", event: "CLIENT_LIST", raw: event };
   }
 
+  if (event.includes("CONNECT")) {
+    return { type: "event", event: "CONNECT", raw: event };
+  }
+
   return { type: "unknown", raw: event };
 }
 
 export function parseClientMetadata(raw: string) {
   return raw
     .replace(">NOTIFY:info,remote-exit,EXIT", "")
-    .replace(/>CLIENT:ESTABLISHED,\d/, "")
+    .replace(/>CLIENT:(ESTABLISHED|CONNECT),\d/, "")
     .replace(">CLIENT:ENV,END", "")
     .trim()
     .split("\r\n")

@@ -21,7 +21,8 @@ export const Event = {
   // SOCKET_TIMEOUT: "socket_timeout",
   MANAGER_READY: "manager:ready",
   // OpenVPN responses
-  CLIENT_CONNECTION: "client:connection",
+  CLIENT_ESTABLISHED: "client:established",
+  CLIENT_CONNECT: "client:connect",
   BYTECOUNT_CLI: "bytecount:cli",
   CLIENT_LIST: "client:list",
   ROUTING_TABLE: "routing:table",

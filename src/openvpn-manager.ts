@@ -4,7 +4,7 @@ import { LoggerAdapter, OpenvpnCore, Options } from "./core.js";
 import type {
   ByteCount,
   Cl,
-  ConnectionClient,
+  ConnectionEvent,
   EventMap,
   InternalEventMap,
   RawConnectionClient,
@@ -90,7 +90,7 @@ export class OpenvpnManager extends OpenvpnCore {
     });
   }
 
-  private handleClassifiedLine(classify: ClassifiedLine) {
+  private async handleClassifiedLine(classify: ClassifiedLine) {
     if (classify.type === "unknown") {
       return classify;
     }
@@ -100,9 +100,12 @@ export class OpenvpnManager extends OpenvpnCore {
         case "BYTECOUNT_CLI":
           this.byteCountCli(classify.raw);
           break;
-        case "CLIENT_CONNECTED":
-          this.env(parseClientMetadata(classify.raw));
+        case "ESTABLISHED":
+          this.establishedClient(await this.processClient(classify.raw));
           break;
+        case "CONNECT":
+            this.connectClient(await this.processClient(classify.raw));
+          break
         case "CLIENT_DISCONNECT":
           this.logger.debug("write socket status. Is event disconnected");
           this.writeSocket("status 2\r\n");
@@ -194,9 +197,9 @@ export class OpenvpnManager extends OpenvpnCore {
     }
   }
 
-  private env(response: string[][]) {
+  protected async prePreccessEnv(response: string[][]) {
     const oc = Object.fromEntries(response) as RawConnectionClient;
-    const client: ConnectionClient = {
+    const client: ConnectionEvent = {
       id: this.openVPNServer.id,
       connection: oc.connection,
       n_clients: oc.n_clients, // client counter
@@ -242,11 +245,23 @@ export class OpenvpnManager extends OpenvpnCore {
       tunMtu: Number(oc.tun_mtu),
       dev: oc.dev,
       devType: oc.dev_type,
-    };
+    }
 
-    this.active.add(client.commonName);
-    this.eventEmitter.emit(Event.CLIENT_CONNECTION, client);
+    return client;
   }
+
+  public async connectClient(client: ConnectionEvent) {
+    this.eventEmitter.emit(Event.CLIENT_CONNECT, client);
+  }
+  
+  public async establishedClient(client: ConnectionEvent) {
+    this.active.add(client.commonName);
+    this.eventEmitter.emit(Event.CLIENT_ESTABLISHED, client);
+  }
+
+private async processClient(raw: string) {
+  return this.prePreccessEnv(parseClientMetadata(raw));
+}
 
   /**
    * Метод завершает корректно работу всех таймеров, слушателей и сокетов
