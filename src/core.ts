@@ -133,7 +133,8 @@ export class OpenvpnCore {
       });
 
       let buffer = "";
-      const regex = /\r?\nEND\r?\n/;
+      let blockLines: string[] = [];
+      let clientEnvLines: string[] = [];
 
       this.socket.on("data", (chunk: Buffer) => {
         buffer += chunk.toString();
@@ -142,7 +143,8 @@ export class OpenvpnCore {
         buffer = lines.pop() ?? ""; // последняя незавершённая строка остаётся в буфере
 
         for (const line of lines) {
-          const trimmed = line.trim();
+          const normalized = line.replace(/\r$/, "");
+          const trimmed = normalized.trim();
           if (!trimmed) continue;
 
           if (trimmed.startsWith("SUCCESS:") || trimmed.startsWith("ERROR:")) {
@@ -150,22 +152,36 @@ export class OpenvpnCore {
             continue;
           }
 
-          // Блочные ответы собираем обратно и ищем END
-          buffer = trimmed + "\n" + buffer;
-        }
+          if (trimmed.startsWith(">CLIENT:")) {
+            clientEnvLines.push(trimmed);
+            if (trimmed.startsWith(">CLIENT:ENV,END")) {
+              if (clientEnvLines.length > 0) {
+                this.emitter.emit("data", clientEnvLines.join("\r\n"));
+              }
+              clientEnvLines = [];
+            }
+            continue;
+          }
 
-        // Блочные ответы (status 2, version, log)
-        let match: RegExpExecArray | null;
-        while ((match = regex.exec(buffer)) !== null) {
-          const block = buffer.slice(0, match.index);
-          buffer = buffer.slice(match.index + match[0].length);
-          this.emitter.emit("data", block);
-          regex.lastIndex = 0;
+          if (trimmed === "END") {
+            if (blockLines.length > 0) {
+              this.emitter.emit("data", blockLines.join("\r\n"));
+            }
+            blockLines = [];
+            continue;
+          }
+
+          if (trimmed.startsWith(">")) {
+            this.emitter.emit("data", trimmed);
+            continue;
+          }
+
+          // Блочные ответы собираем построчно до END
+          blockLines.push(trimmed);
         }
       });
     } catch (e) {
       this.logger.error(e);
-      throw e
     }
   }
 

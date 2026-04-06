@@ -1,6 +1,6 @@
 {
   "name": "@ad0nis/openvpn-manager",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "main": "dist/index.js",
   "license": "Apache-2.0",
   "type": "module",
@@ -21,8 +21,17 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.2"
   },
+  "scripts": {
+    "test": "node --import tsx node_modules/mocha/bin/mocha \"test/**/*.ts\""
+  },
   "exports": {
     ".": "./dist/index.js",
     "./dist/openvpn-manager": "./dist/openvpn-manager.js"
-  }
+  },
+    "keywords": [
+    "Openvpn",
+    "vpn",
+    "Telnet",
+    "Manager"
+  ]
 }

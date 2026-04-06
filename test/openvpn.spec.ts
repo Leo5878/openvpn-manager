@@ -1,5 +1,5 @@
 import assert from "node:assert";
-import { classifyLog, parseClientStatus } from "../src/parse.js";
+import { classifyLog, parseClientMetadata, parseClientStatus } from "../src/parse.js";
 
 describe("classifyLine", () => {
   const clients = `TITLE,OpenVPN 2.6.14 [git:makepkg/f588592ee6c6323b+] x86_64-pc-linux-gnu [SSL (OpenSSL)] [LZO] [LZ4] [EPOLL] [PKCS11] [MH/PKTINFO] [AEAD] [DCO] built on Apr  2 2025\r
@@ -51,11 +51,36 @@ END`;
     });
   });
 
+  it("должен распознать CLIENT_DISCONNECT", () => {
+    const line = ">NOTIFY:info,remote-exit,EXIT";
+    const cl = classifyLog(line);
+    assert.deepStrictEqual(cl, {
+      type: "event",
+      event: "CLIENT_DISCONNECT",
+      raw: "unknown",
+    });
+  });
+
   it("parseClientStatus returns array with two clients", () => {
     const { raw } = classifyLog(clients);
     const parsed = parseClientStatus(raw);
 
     assert.strictEqual(Array.isArray(parsed), true);
     assert.strictEqual(parsed.length, 2);
+  });
+
+  it("parseClientMetadata parses key-value pairs", () => {
+    const raw = [
+      ">CLIENT:CONNECT,1",
+      "untrusted_ip=192.168.1.1",
+      "common_name=bob",
+      ">CLIENT:ENV,END",
+    ].join("\r\n");
+
+    const parsed = parseClientMetadata(raw);
+    assert.deepStrictEqual(parsed, [
+      ["untrusted_ip", "192.168.1.1"],
+      ["common_name", "bob"],
+    ]);
   });
 });
