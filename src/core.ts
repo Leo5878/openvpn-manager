@@ -125,7 +125,7 @@ export class OpenvpnCore {
   public setHandlers() {
     try {
       if (!this.socket) {
-        throw new Error("Socket is not defined");
+        throw new Error("Socket is undefined");
       }
 
       this.socket.once("connect", () => {
@@ -163,9 +163,9 @@ export class OpenvpnCore {
           regex.lastIndex = 0;
         }
       });
-
     } catch (e) {
       this.logger.error(e);
+      throw e
     }
   }
 
