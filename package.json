@@ -22,7 +22,7 @@
     "typescript": "^5.9.2"
   },
   "scripts": {
-    "test": "node --import tsx node_modules/mocha/bin/mocha \"test/**/*.ts\""
+    "test": "mocha \"test/**/*.ts\""
   },
   "exports": {
     ".": "./dist/index.js",

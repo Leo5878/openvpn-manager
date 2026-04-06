@@ -1,4 +1,5 @@
 import { Socket, createConnection } from "net";
+import { setTimeout as delay } from "node:timers/promises";
 import { EventEmitter } from "node:events";
 import { Event } from "./Event.js";
 import { createDefaultLogger } from "./utls.js";
@@ -27,14 +28,14 @@ export interface Options {
 
 export class OpenvpnCore {
   public socket: Socket;
-  private openvpnServer: Connect;
+  private readonly openvpnServer: Connect;
   private prefixLog = "openvpn";
   protected reconnectTime: number = 10000; // milliseconds. 10 second
   protected emitter: EventEmitter;
-  protected reconnectTimeout!: NodeJS.Timeout;
   protected debug: boolean;
   protected reconnectRule: "always" | "never" | "manual";
   protected logger: LoggerAdapter;
+  protected reconnectAbort?: AbortController;
 
   private readyResolver!: () => void;
   private reconnectState: boolean = false;
@@ -56,6 +57,11 @@ export class OpenvpnCore {
   }
 
   public connect() {
+    if (this.reconnectAbort) {
+      this.reconnectAbort.abort();
+      this.reconnectAbort = undefined;
+    }
+
     if (this.connecting) {
       this.logger.warn("Connection attempt skipped: already connecting or connected")
       return Promise.resolve();
@@ -92,9 +98,7 @@ export class OpenvpnCore {
             this.reconnectState = true;
             // this.emitter.emit(Event.MANAGER_READY);
 
-            clearTimeout(managementHelloTimeout);
-            clearTimeout(this.reconnectTimeout);
-
+            clearInterval(managementHelloTimeout);
             this.setHandlers();
             this.readyResolver();
             return resolve();
@@ -117,7 +121,7 @@ export class OpenvpnCore {
           this.reconnect();
         }
 
-        clearTimeout(managementHelloTimeout);
+        clearInterval(managementHelloTimeout);
       });
     });
   }
@@ -201,14 +205,23 @@ export class OpenvpnCore {
 
   public async reconnect() {
     const { host, port, id } = this.openvpnServer;
-    const timeUnit = this.reconnectTime >= 1000 ? `${this.reconnectTime / 1000}s` : 'ms';
+    const timeUnit =
+      this.reconnectTime >= 1000 ? `${this.reconnectTime / 1000}s` : "ms";
 
-    this.logger.info(`Reconnecting to server ${this.openvpnServer.id} ${host}:${port} in ${timeUnit}`);
-    await new Promise<void>((resolve) => {
-      this.reconnectTimeout = setInterval(() => {
-        return resolve()
-      }, this.reconnectTime);
-    });
+    this.logger.info(`Reconnecting to server ${id} ${host}:${port} in ${timeUnit}`);
+    this.reconnectAbort?.abort();
+    this.reconnectAbort = new AbortController();
+
+    try {
+      await delay(this.reconnectTime, { signal: this.reconnectAbort.signal });
+    } catch (error: any) {
+      if (error?.name === "AbortError") {
+        return;
+      }
+      throw error;
+    } finally {
+      this.reconnectAbort = undefined;
+    }
 
     await this.connect();
   }
@@ -237,6 +250,10 @@ export class OpenvpnCore {
   public endSocket(): Promise<void> {
     return new Promise((resolve) => {
       this.reconnectState = false
+      if (this.reconnectAbort) {
+        this.reconnectAbort.abort();
+        this.reconnectAbort = undefined;
+      }
       if (this.socket) {
         return this.socket.end(() => {
           resolve();
