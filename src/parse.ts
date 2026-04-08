@@ -25,7 +25,7 @@ export function classifyLog(event: string): ClassifiedLine {
     return { type: "data", event: "CLIENT_LIST", raw: event };
   }
 
-  if (event.includes("CONNECT")) {
+  if (event.includes(">CLIENT:CONNECT")) {
     return { type: "event", event: "CONNECT", raw: event };
   }
 
@@ -35,11 +35,14 @@ export function classifyLog(event: string): ClassifiedLine {
 export function parseClientMetadata(raw: string) {
   return raw
     .replace(">NOTIFY:info,remote-exit,EXIT", "")
-    .replace(/>CLIENT:(ESTABLISHED|CONNECT),\d/, "")
+    .replace(/>CLIENT:(ESTABLISHED|CONNECT|REAUTH),(\d+)/, "clientID=$2")
     .replace(">CLIENT:ENV,END", "")
     .trim()
     .split("\r\n")
-    .map((i) => i.slice(i.indexOf(",") + 1).split("="));
+    .map((i) => i
+        .slice(i.indexOf(",") + 1)
+        .split("=")
+    );
 }
 
 export function parseClientStatus(clientsListRaw: string) {

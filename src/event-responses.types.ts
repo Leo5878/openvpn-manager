@@ -5,6 +5,7 @@ export type CustomEventType = {
 };
 
 interface Base {
+  /** Server identifier provided by the client during library initialization. Internal value*/
   id: string;
 }
 
@@ -70,6 +71,7 @@ export interface Cl {
 
 export interface RawConnectionClient {
   connection: string;
+  clientID: number;
   n_clients: string;
   time_unix: string;
   time_ascii: string;
@@ -129,9 +131,9 @@ export interface RawConnectionClient {
 /**
  * Represents server-side initialization data sent by an OpenVPN or similar service.
  */
-export interface ConnectionEvent<T = string> extends Base {
-  /** Server identifier provided by the client during library initialization. Internal value*/
-  id: string;
+export interface ConnectionEvent<T = OpenVPNPlatform> extends Base {
+  /** Unique client ID assigned by the OpenVPN server for this session */
+  clientID: number;
 
   /**
    * Current connection status of the client.

@@ -29,8 +29,10 @@ class TestManager extends OpenvpnManager {
   }
 }
 
+const tick = () => new Promise<void>((resolve) => setImmediate(resolve));
+
 describe("OpenvpnManager", () => {
-  it("emits client list and disconnect events when clients disappear", () => {
+  it("emits client list and disconnect events when clients disappear", async () => {
     const emitter = new EventEmitter();
     const manager = new TestManager(emitter);
 
@@ -58,6 +60,7 @@ describe("OpenvpnManager", () => {
     emitter.emit("data", statusTwoClients);
     emitter.emit("data", statusOneClient);
 
+    await tick();
     assert.strictEqual(lists.length, 2);
     assert.strictEqual(lists[0].length, 2);
     assert.strictEqual(lists[1].length, 1);

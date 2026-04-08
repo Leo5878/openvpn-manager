@@ -7,7 +7,7 @@
   "description": "Provides an API for connecting to, sending commands to, and receiving messages from an OpenVPN management socket",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Leo5878/openvpn-manager"
+    "url": "git+https://github.com/Leo5878/openvpn-manager.git"
   },
   "homepage": "https://github.com/Leo5878/openvpn-manager",
   "author": "leonardo5878",

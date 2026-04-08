@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { Event, InternalEvent } from "./Event.js";
-import { LoggerAdapter, OpenvpnCore, Options } from "./core.js";
+import { LoggerAdapter, Options } from "./core.js";
 import type {
   ByteCount,
   Cl,
@@ -16,25 +16,29 @@ import {
   parseClientMetadata,
   parseClientStatus,
 } from "./parse.js";
-import { OpenvpnCommands } from "./openvpn-commands.js";
+import { OpenvpnCommands } from "./command/openvpn-commands.js";
 
-type EventKey = (typeof Event)[keyof typeof Event] & InternalEventMap;
+type EventKey = (typeof Event)[keyof typeof Event] & keyof InternalEventMap;
 export type Opts = {
   emitter?: EventEmitter;
   statusInterval?: number;
   logger?: LoggerAdapter;
 } & Options;
 
+type ColCl = Set<string>
+
 export class OpenvpnManager extends OpenvpnCommands {
   private eventEmitter: EventEmitter;
   private openVPNServer: Connect;
   private getStatusInterval: NodeJS.Timeout;
+  // public commands:
 
-  private active: Set<string> = new Set<string>();
+  private active: ColCl = new Set();
 
   constructor(openVPNServer: Connect, opts?: Opts) {
     const emitter: EventEmitter = opts?.emitter ?? new EventEmitter();
     super(openVPNServer, emitter, { logger: opts?.logger });
+    // this.commands = new OpenvpnCommands(openVPNServer, emitter, { logger: opts?.logger })
     // TODO убрать и оставить тот, что в connect
     this.eventEmitter = emitter;
     this.openVPNServer = openVPNServer;
@@ -78,13 +82,13 @@ export class OpenvpnManager extends OpenvpnCommands {
   }
 
   private handleCommand() {
-    this.eventEmitter.on("data", (data: string) => {
+    this.eventEmitter.on("data", async (data: string) => {
       if (this.debug) {
         console.debug(data);
       }
 
       const classify = classifyLog(data);
-      this.handleClassifiedLine(classify);
+      await this.handleClassifiedLine(classify);
 
       // Нужен, чтобы запустить проверку того, не отключился ли клиент
       this.eventEmitter.emit(InternalEvent.CLIENT_END);
@@ -127,28 +131,24 @@ export class OpenvpnManager extends OpenvpnCommands {
     const prev: Set<string> = new Set();
 
     this.eventEmitter.on(Event.CLIENT_LIST, (data: Cl[]) => {
-      data.forEach(({ commonName }) => {
-        prev.add(commonName);
-      });
+      data.forEach(({ commonName }) => prev.add(commonName))
     });
 
     this.eventEmitter.on(InternalEvent.CLIENT_END, () => {
       const diff = this.diffDisconnected(prev, this.active);
 
-      if (diff.length <= 0) {
+      if (diff.length === 0) {
         return;
       }
 
-      prev.forEach((client) => {
-        prev.delete(client);
-      });
+      prev.forEach((client) => prev.delete(client));
 
       this.eventEmitter.emit(Event.CLIENT_DISCONNECTION, diff);
     });
   }
 
-  private diffDisconnected(prev: Set<string>, curr: Set<string>) {
-    return [...prev.keys()].filter((id) => !curr.has(id));
+  private diffDisconnected(prev: ColCl, curr: ColCl) {
+    return [...prev].filter((id) => !curr.has(id));
   }
 
   private byteCountCli(commandResponse: string) {
@@ -168,6 +168,7 @@ export class OpenvpnManager extends OpenvpnCommands {
 
   private parseClientList(listUser: string[][]) {
     try {
+      // TODO подумать, чтобы убрать
       this.active.clear();
       const arrayList: Cl[] = [];
 
@@ -198,10 +199,11 @@ export class OpenvpnManager extends OpenvpnCommands {
     }
   }
 
-  protected async prePreccessEnv(response: string[][]) {
+  private async preProcessEnv(response: string[][]) {
     const oc = Object.fromEntries(response) as RawConnectionClient;
     const client: ConnectionEvent = {
       id: this.openVPNServer.id,
+      clientID: oc.clientID,
       connection: oc.connection,
       n_clients: oc.n_clients, // client counter
       timeUnix: Number(oc.time_unix),
@@ -251,17 +253,17 @@ export class OpenvpnManager extends OpenvpnCommands {
     return client;
   }
 
-  public async connectClient(client: ConnectionEvent) {
+  private connectClient(client: ConnectionEvent) {
     this.eventEmitter.emit(Event.CLIENT_CONNECT, client);
   }
 
-  public async establishedClient(client: ConnectionEvent) {
+  private establishedClient(client: ConnectionEvent) {
     this.active.add(client.commonName);
     this.eventEmitter.emit(Event.CLIENT_ESTABLISHED, client);
   }
 
-  private async processClient(raw: string) {
-    return this.prePreccessEnv(parseClientMetadata(raw));
+  private processClient(raw: string) {
+    return this.preProcessEnv(parseClientMetadata(raw));
   }
 
   /**

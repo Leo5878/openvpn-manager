@@ -79,6 +79,7 @@ END`;
 
     const parsed = parseClientMetadata(raw);
     assert.deepStrictEqual(parsed, [
+      ["clientID", "1"],
       ["untrusted_ip", "192.168.1.1"],
       ["common_name", "bob"],
     ]);

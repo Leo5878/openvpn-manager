@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { EventEmitter } from "node:events";
-import { OpenvpnCommands } from "../src/openvpn-commands.js";
+import { OpenvpnCommands } from "../src/command/openvpn-commands.js";
 import { OpenvpnCommandError } from "../src/error.js";
 
 class TestCommands extends OpenvpnCommands {
