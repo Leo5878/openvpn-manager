@@ -23,7 +23,12 @@ export const Event = {
   // OpenVPN responses
   CLIENT_ESTABLISHED: "client:established",
   CLIENT_CONNECT: "client:connect",
-  BYTECOUNT_CLI: "bytecount:cli",
+  BYTECOUNT: "byteCount",
+  BYTECOUNT_CLI: "cli:byteCount",
+  HOLD: "hold",
+  LOG: "log",
+  PASSWORD: "password",
+  RSA_SIGN: "rsa:sign",
   CLIENT_LIST: "client:list",
   ROUTING_TABLE: "routing:table",
   SERVER_TIME: "server:time",

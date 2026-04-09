@@ -88,6 +88,97 @@ describe("OpenvpnManager", () => {
     assert.strictEqual(events[0].id, "srv");
     assert.strictEqual(events[0].bytesReceived, 10);
     assert.strictEqual(events[0].bytesSent, 20);
-    assert.strictEqual(Number.isNaN(events[0].clientID), true);
+    assert.strictEqual(events[0].clientID, 7);
+  });
+
+  it("emits log events", () => {
+    const emitter = new EventEmitter();
+    const manager = new TestManager(emitter);
+
+    const events: any[] = [];
+    emitter.on(Event.LOG, (data) => events.push(data));
+
+    emitter.emit("data", ">LOG:1710000000,I,Initialization Sequence Completed");
+
+    assert.strictEqual(events.length, 1);
+    assert.deepStrictEqual(events[0], {
+      id: "srv",
+      timestamp: 1710000000,
+      flags: "I",
+      message: "Initialization Sequence Completed",
+    });
+  });
+
+  it("emits bytecount events in client mode", () => {
+    const emitter = new EventEmitter();
+    const manager = new TestManager(emitter);
+
+    const events: any[] = [];
+    emitter.on(Event.BYTECOUNT, (data) => events.push(data));
+
+    emitter.emit("data", ">BYTECOUNT:10,20");
+
+    assert.deepStrictEqual(events, [
+      {
+        id: "srv",
+        bytesReceived: 10,
+        bytesSent: 20,
+      },
+    ]);
+  });
+
+  it("emits hold events", () => {
+    const emitter = new EventEmitter();
+    const manager = new TestManager(emitter);
+
+    const events: any[] = [];
+    emitter.on(Event.HOLD, (data) => events.push(data));
+
+    emitter.emit("data", ">HOLD:Waiting for hold release");
+
+    assert.deepStrictEqual(events, [
+      {
+        id: "srv",
+        message: "Waiting for hold release",
+      },
+    ]);
+  });
+
+  it("emits password events", () => {
+    const emitter = new EventEmitter();
+    const manager = new TestManager(emitter);
+
+    const events: any[] = [];
+    emitter.on(Event.PASSWORD, (data) => events.push(data));
+
+    emitter.emit("data", ">PASSWORD:Need 'Auth' username/password");
+
+    assert.deepStrictEqual(events, [
+      {
+        id: "srv",
+        message: "Need 'Auth' username/password",
+        token: "Auth",
+        isNeed: true,
+        isVerificationFailed: false,
+        staticChallenge: undefined,
+      },
+    ]);
+  });
+
+  it("emits rsa-sign events", () => {
+    const emitter = new EventEmitter();
+    const manager = new TestManager(emitter);
+
+    const events: any[] = [];
+    emitter.on(Event.RSA_SIGN, (data) => events.push(data));
+
+    emitter.emit("data", ">RSA_SIGN:Zm9v");
+
+    assert.deepStrictEqual(events, [
+      {
+        id: "srv",
+        base64Data: "Zm9v",
+      },
+    ]);
   });
 });

@@ -22,9 +22,10 @@
     "access": "public"
   },
   "devDependencies": {
-    "@types/node": "^24.5.0",
     "@types/jest": "^30.0.0",
+    "@types/node": "^24.5.0",
     "mocha": "^11.7.5",
+    "nodemon": "^3.1.14",
     "tsx": "^4.21.0",
     "typescript": "^5.9.2"
   },

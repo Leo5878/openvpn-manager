@@ -199,7 +199,7 @@ export class OpenvpnCore {
         this.logger.debug("debug write", command);
       });
     } catch (error: any) {
-      this.logger.error(`${this.prefixLog} writeSocket >> error = ${error}`);
+      this.logger.error(`${error}`);
     }
   }
 
@@ -209,7 +209,8 @@ export class OpenvpnCore {
       this.reconnectTime >= 1000 ? `${this.reconnectTime / 1000}s` : "ms";
 
     this.logger.info(`Reconnecting to server ${id} ${host}:${port} in ${timeUnit}`);
-    this.reconnectAbort?.abort();
+    this.reconnectAbort.abort();
+    // TODO Проверить для чего он тут нужен
     this.reconnectAbort = new AbortController();
 
     try {

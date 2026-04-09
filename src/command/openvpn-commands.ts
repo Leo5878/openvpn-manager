@@ -33,17 +33,18 @@ export class OpenvpnCommands extends OpenvpnCore {
     private listenForResponses(): void {
         this.emitter.on("data", (data: string) => {
             /**
-             * Ответы на `status 2` всегда содержат маркер CLIENT_LIST или TITLE,
-             * это данные для парсера событий в OpenvpnManager — пропускаем их здесь.
-             * Всё остальное — ответ на пользовательскую команду из очереди.
+             * Асинхронные real-time сообщения management interface не должны
+             * попадать в очередь ответов на команды. Блочные ответы `status 2`
+             * тоже разбираются отдельно в OpenvpnManager.
              */
+            const isAsyncEvent = data.startsWith(">");
             const isStatusResponse =
                 data.includes("CLIENT_LIST") ||
                 data.startsWith("TITLE") ||
                 data.includes("ROUTING_TABLE") ||
                 data.includes("GLOBAL_STATS");
 
-            if (isStatusResponse) return;
+            if (isAsyncEvent || isStatusResponse) return;
 
             const pending = this.pendingCommands.shift();
             if (!pending) return;
@@ -160,6 +161,7 @@ export class OpenvpnCommands extends OpenvpnCore {
         const cmd = clientReason
             ? `client-deny ${clientId} ${keyId} ${serverReason} ${clientReason}`
             : `client-deny ${clientId} ${keyId} ${serverReason}`;
+
         const raw = await this.sendCommand(cmd);
         return this.parseSuccess(raw);
     }

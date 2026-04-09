@@ -61,6 +61,25 @@ describe("OpenvpnCommands", () => {
     assert.strictEqual(resolved, true);
   });
 
+  it("ignores async management events while waiting for a command reply", async () => {
+    const emitter = new EventEmitter();
+    const commands = new TestCommands(emitter);
+
+    let resolved = false;
+    const promise = commands.killClientByCn("alice").then(() => {
+      resolved = true;
+    });
+
+    emitter.emit("data", ">BYTECOUNT_CLI:7,10,20");
+    emitter.emit("data", ">LOG:1710000000,I,Initialization Sequence Completed");
+    await tick();
+    assert.strictEqual(resolved, false);
+
+    emitter.emit("data", "SUCCESS: killed");
+    await promise;
+    assert.strictEqual(resolved, true);
+  });
+
   it("rejects when server replies with ERROR", async () => {
     const emitter = new EventEmitter();
     const commands = new TestCommands(emitter);

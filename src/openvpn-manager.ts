@@ -3,16 +3,21 @@ import { Event, InternalEvent } from "./Event.js";
 import { LoggerAdapter, Options } from "./core.js";
 import type {
   ByteCount,
+  ByteCountServer,
   Cl,
   ConnectionEvent,
   EventMap,
+  HoldMessage,
   InternalEventMap,
+  LogMessage,
+  PasswordMessage,
   RawConnectionClient,
+  RsaSignRequest,
 } from "./event-responses.types.js";
 import type { Connect } from "./core.js";
 import {
   ClassifiedLine,
-  classifyLog,
+  classifyLog, parseByteCount, parseByteCountServer, parseHold, parseLog, parsePassword, parseRsaSign,
   parseClientMetadata,
   parseClientStatus,
 } from "./parse.js";
@@ -102,8 +107,8 @@ export class OpenvpnManager extends OpenvpnCommands {
 
     if (classify.type === "event") {
       switch (classify.event) {
-        case "BYTECOUNT_CLI":
-          this.byteCountCli(classify.raw);
+        case "BYTECOUNT":
+          this.byteCount(parseByteCountServer(classify.raw));
           break;
         case "ESTABLISHED":
           this.establishedClient(await this.processClient(classify.raw));
@@ -114,6 +119,21 @@ export class OpenvpnManager extends OpenvpnCommands {
         case "CLIENT_DISCONNECT":
           this.logger.debug("write socket status. Is event disconnected");
           this.writeSocket("status 2\r\n");
+          break;
+        case "BYTECOUNT_CLI":
+          this.byteCountCli(parseByteCount(classify.raw));
+          break;
+        case "HOLD":
+          this.holdMessage(parseHold(classify.raw));
+          break;
+        case "LOG":
+          this.logMessage(parseLog(classify.raw));
+          break;
+        case "PASSWORD":
+          this.passwordMessage(parsePassword(classify.raw));
+          break;
+        case "RSA_SIGN":
+          this.rsaSignRequest(parseRsaSign(classify.raw));
           break;
       }
     }
@@ -151,21 +171,72 @@ export class OpenvpnManager extends OpenvpnCommands {
     return [...prev].filter((id) => !curr.has(id));
   }
 
-  private byteCountCli(commandResponse: string) {
-    const byteCountArr = commandResponse.split(",");
-
-    if (byteCountArr.length == 3) {
+  private byteCountCli(res: number[]) {
+    if (res.length == 3) {
       const data: ByteCount = {
         id: this.openVPNServer.id,
-        clientID: Number(byteCountArr[0]),
-        bytesReceived: Number(byteCountArr[1]), // from client
-        bytesSent: Number(byteCountArr[2]), // to client
+        clientID: res[0],
+        bytesReceived: res[1], // from client
+        bytesSent: res[2], // to client
       };
 
       this.eventEmitter.emit(Event.BYTECOUNT_CLI, data);
     }
   }
 
+  private byteCount(res: Omit<ByteCountServer, "id">) {
+    const data: ByteCountServer = {
+      id: this.openVPNServer.id,
+      bytesReceived: res.bytesReceived,
+      bytesSent: res.bytesSent,
+    };
+
+    this.eventEmitter.emit(Event.BYTECOUNT, data);
+  }
+
+  private holdMessage(message: string) {
+    const data: HoldMessage = {
+      id: this.openVPNServer.id,
+      message,
+    };
+
+    this.eventEmitter.emit(Event.HOLD, data);
+  }
+
+  private logMessage(res: Omit<LogMessage, "id">) {
+    const data: LogMessage = {
+      id: this.openVPNServer.id,
+      timestamp: res.timestamp,
+      flags: res.flags,
+      message: res.message,
+    };
+
+    this.eventEmitter.emit(Event.LOG, data);
+  }
+
+  private passwordMessage(res: Omit<PasswordMessage, "id">) {
+    const data: PasswordMessage = {
+      id: this.openVPNServer.id,
+      message: res.message,
+      token: res.token,
+      isNeed: res.isNeed,
+      isVerificationFailed: res.isVerificationFailed,
+      staticChallenge: res.staticChallenge,
+    };
+
+    this.eventEmitter.emit(Event.PASSWORD, data);
+  }
+
+  private rsaSignRequest(res: Omit<RsaSignRequest, "id">) {
+    const data: RsaSignRequest = {
+      id: this.openVPNServer.id,
+      base64Data: res.base64Data,
+    };
+
+    this.eventEmitter.emit(Event.RSA_SIGN, data);
+  }
+
+  // TODO move to file commands
   private parseClientList(listUser: string[][]) {
     try {
       // TODO подумать, чтобы убрать

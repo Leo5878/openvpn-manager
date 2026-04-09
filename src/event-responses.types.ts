@@ -279,6 +279,55 @@ export interface ByteCount extends Base {
   bytesSent: number;
 }
 
+export interface ByteCountServer extends Base {
+  /** Total number of bytes received from the server. */
+  bytesReceived: number;
+
+  /** Total number of bytes sent to the server. */
+  bytesSent: number;
+}
+
+export interface LogMessage extends Base {
+  /** Unix timestamp from the management interface log event. */
+  timestamp: number;
+
+  /** OpenVPN log flags, e.g. I/F/N/W/D. */
+  flags: string;
+
+  /** Original log message text. */
+  message: string;
+}
+
+export interface HoldMessage extends Base {
+  /** Human-readable hold status message from OpenVPN. */
+  message: string;
+}
+
+export interface PasswordMessage extends Base {
+  /** Full text after the >PASSWORD: prefix. */
+  message: string;
+
+  /** Requested credential or failed credential label. */
+  token?: string;
+
+  /** Whether the message is asking for credentials. */
+  isNeed: boolean;
+
+  /** Whether the message reports verification failure. */
+  isVerificationFailed: boolean;
+
+  /** Static challenge metadata if present. */
+  staticChallenge?: {
+    echo: boolean;
+    text: string;
+  };
+}
+
+export interface RsaSignRequest extends Base {
+  /** Base64-encoded data that must be signed externally. */
+  base64Data: string;
+}
+
 export type ClientDisconnect = string[];
 export interface SocketError {
   id: number;
@@ -289,7 +338,12 @@ export interface EventMap {
   // Event where client connection to openvpn server
   [Event.CLIENT_CONNECT]: ConnectionEvent;
   [Event.CLIENT_ESTABLISHED]: ConnectionEvent
+  [Event.BYTECOUNT]: ByteCountServer;
   [Event.BYTECOUNT_CLI]: ByteCount;
+  [Event.HOLD]: HoldMessage;
+  [Event.LOG]: LogMessage;
+  [Event.PASSWORD]: PasswordMessage;
+  [Event.RSA_SIGN]: RsaSignRequest;
   // List clients connected to openvpn server
   [Event.CLIENT_LIST]: Cl[];
   [Event.ROUTING_TABLE]: void;
