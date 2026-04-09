@@ -151,7 +151,11 @@ export class OpenvpnManager extends OpenvpnCommands {
     const prev: Set<string> = new Set();
 
     this.eventEmitter.on(Event.CLIENT_LIST, (data: Cl[]) => {
-      data.forEach(({ commonName }) => prev.add(commonName))
+      for (const { commonName } of data) {
+        if (commonName !== "UNDEF") {
+          prev.add(commonName);
+        }
+      }
     });
 
     this.eventEmitter.on(InternalEvent.CLIENT_END, () => {
