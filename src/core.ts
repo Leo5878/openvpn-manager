@@ -63,7 +63,9 @@ export class OpenvpnCore {
     }
 
     if (this.connecting) {
-      this.logger.warn("Connection attempt skipped: already connecting or connected")
+      this.logger.warn(
+        "Connection attempt skipped: already connecting or connected",
+      );
       return Promise.resolve();
     }
 
@@ -82,7 +84,7 @@ export class OpenvpnCore {
       });
 
       this.socket.once("connect", () => {
-        this.logger.info("Socket connected")
+        this.logger.info("Socket connected");
 
         this.socket.once("data", (stream: string) => {
           const managementHello = stream.toString();
@@ -208,13 +210,17 @@ export class OpenvpnCore {
     const timeUnit =
       this.reconnectTime >= 1000 ? `${this.reconnectTime / 1000}s` : "ms";
 
-    this.logger.info(`Reconnecting to server ${id} ${host}:${port} in ${timeUnit}`);
+    this.logger.info(
+      `Reconnecting to server ${id} ${host}:${port} in ${timeUnit}`,
+    );
     this.reconnectAbort.abort();
     // TODO Проверить для чего он тут нужен
     this.reconnectAbort = new AbortController();
 
     try {
-      await delay(this.reconnectTime, { signal: this.reconnectAbort.signal });
+      await delay(this.reconnectTime, {
+        signal: this.reconnectAbort.signal,
+      });
     } catch (error: any) {
       if (error?.name === "AbortError") {
         return;
@@ -250,7 +256,7 @@ export class OpenvpnCore {
    */
   public endSocket(): Promise<void> {
     return new Promise((resolve) => {
-      this.reconnectState = false
+      this.reconnectState = false;
       if (this.reconnectAbort) {
         this.reconnectAbort.abort();
         this.reconnectAbort = undefined;

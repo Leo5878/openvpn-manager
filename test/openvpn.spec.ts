@@ -23,7 +23,7 @@ GLOBAL_STATS,dco_enabled,0\r
 END`;
 
   it("должен вернуть client для CLIENT_LIST", () => {
-    const cl = classifyLog(clients)
+    const cl = classifyLog(clients);
     assert.deepStrictEqual(cl, {
       type: "data",
       event: "CLIENT_LIST",
@@ -105,7 +105,7 @@ END`;
     const line = "TITLE,OpenVPN 2.6.14";
     assert.deepStrictEqual(classifyLog(line), {
       type: "unknown",
-      raw: line
+      raw: line,
     });
   });
 

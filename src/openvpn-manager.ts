@@ -17,7 +17,13 @@ import type {
 import type { Connect } from "./core.js";
 import {
   ClassifiedLine,
-  classifyLog, parseByteCount, parseByteCountServer, parseHold, parseLog, parsePassword, parseRsaSign,
+  classifyLog,
+  parseByteCount,
+  parseByteCountServer,
+  parseHold,
+  parseLog,
+  parsePassword,
+  parseRsaSign,
   parseClientMetadata,
   parseClientStatus,
 } from "./parse.js";
@@ -30,7 +36,7 @@ export type Opts = {
   logger?: LoggerAdapter;
 } & Options;
 
-type ColCl = Set<string>
+type ColCl = Set<string>;
 
 export class OpenvpnManager extends OpenvpnCommands {
   private eventEmitter: EventEmitter;
@@ -57,7 +63,6 @@ export class OpenvpnManager extends OpenvpnCommands {
         this.dispatchDisconnectClient();
       }
     });
-
   }
 
   on<K extends EventKey>(event: K, listener: (arg: EventMap[K]) => void) {
@@ -120,7 +125,7 @@ export class OpenvpnManager extends OpenvpnCommands {
         case "CONNECT":
         case "REAUTH":
           this.connectClient(this.processClient(classify.raw));
-          break
+          break;
         case "DISCONNECT":
           this.disconnectClient(this.processClient(classify.raw));
           break;
@@ -333,7 +338,7 @@ export class OpenvpnManager extends OpenvpnCommands {
       tunMtu: Number(oc.tun_mtu),
       dev: oc.dev,
       devType: oc.dev_type,
-    }
+    };
 
     return client;
   }

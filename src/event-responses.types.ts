@@ -337,7 +337,7 @@ export interface SocketError {
 export interface EventMap {
   // Event where client connection to openvpn server
   [Event.CLIENT_CONNECT]: ConnectionEvent;
-  [Event.CLIENT_ESTABLISHED]: ConnectionEvent
+  [Event.CLIENT_ESTABLISHED]: ConnectionEvent;
   [Event.BYTECOUNT]: ByteCountServer;
   [Event.BYTECOUNT_CLI]: ByteCount;
   [Event.HOLD]: HoldMessage;
@@ -350,7 +350,7 @@ export interface EventMap {
   [Event.SERVER_TIME]: void;
   [Event.CLIENT_DISCONNECTION]: ClientDisconnect;
   [Event.SOCKET_ERROR]: SocketError;
-  [Event.MANAGER_READY]: void
+  [Event.MANAGER_READY]: void;
 }
 
 export interface InternalEventMap extends EventMap {

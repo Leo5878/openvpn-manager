@@ -7,11 +7,7 @@ type Event =
   | "PASSWORD"
   | "RSA_SIGN";
 
-type EventConnection =
-  | "ESTABLISHED"
-  | "CONNECT"
-  | "DISCONNECT"
-  | "REAUTH"
+type EventConnection = "ESTABLISHED" | "CONNECT" | "DISCONNECT" | "REAUTH";
 
 export type ClassifiedLine =
   | { type: "data"; event: Event; raw: string }
@@ -64,17 +60,19 @@ export function classifyLog(event: string): ClassifiedLine {
 }
 
 export function parseClientMetadata(raw: string) {
-  return raw
-    // TODO check
-    // .replace(">NOTIFY:info,remote-exit,EXIT", "")
-    .replace(/>CLIENT:(ESTABLISHED|DISCONNECT|CONNECT|REAUTH),(\d+)/, "clientID=$2")
-    .replace(">CLIENT:ENV,END", "")
-    .trim()
-    .split("\r\n")
-    .map((i) => i
-        .slice(i.indexOf(",") + 1)
-        .split("=")
-    );
+  return (
+    raw
+      // TODO check
+      // .replace(">NOTIFY:info,remote-exit,EXIT", "")
+      .replace(
+        />CLIENT:(ESTABLISHED|DISCONNECT|CONNECT|REAUTH),(\d+)/,
+        "clientID=$2",
+      )
+      .replace(">CLIENT:ENV,END", "")
+      .trim()
+      .split("\r\n")
+      .map((i) => i.slice(i.indexOf(",") + 1).split("="))
+  );
 }
 
 export function parseClientStatus(clientsListRaw: string) {
@@ -86,9 +84,9 @@ export function parseClientStatus(clientsListRaw: string) {
 
 export function parseByteCount(raw: string) {
   return raw
-      .substring(raw.indexOf(':') + 1)
-      .split(",")
-      .map(Number)
+    .substring(raw.indexOf(":") + 1)
+    .split(",")
+    .map(Number);
 }
 
 export function parseByteCountServer(raw: string) {

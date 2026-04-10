@@ -26,20 +26,16 @@ class TestCore extends OpenvpnCore {
   public fakeSocket: FakeSocket;
 
   constructor(emitter: EventEmitter) {
-    super(
-      { id: "srv", host: "127.0.0.1", port: 9999 },
-      emitter,
-      {
-        debug: false,
-        reconnect: "never",
-        logger: {
-          info() {},
-          debug() {},
-          warn() {},
-          error() {},
-        },
+    super({ id: "srv", host: "127.0.0.1", port: 9999 }, emitter, {
+      debug: false,
+      reconnect: "never",
+      logger: {
+        info() {},
+        debug() {},
+        warn() {},
+        error() {},
       },
-    );
+    });
     this.fakeSocket = new FakeSocket();
     this.socket = this.fakeSocket as any;
   }

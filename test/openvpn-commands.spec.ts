@@ -7,20 +7,16 @@ class TestCommands extends OpenvpnCommands {
   public sent: string[] = [];
 
   constructor(emitter: EventEmitter) {
-    super(
-      { id: "test", host: "127.0.0.1", port: 9999 },
-      emitter,
-      {
-        debug: false,
-        reconnect: "never",
-        logger: {
-          info() {},
-          debug() {},
-          warn() {},
-          error() {},
-        },
+    super({ id: "test", host: "127.0.0.1", port: 9999 }, emitter, {
+      debug: false,
+      reconnect: "never",
+      logger: {
+        info() {},
+        debug() {},
+        warn() {},
+        error() {},
       },
-    );
+    });
   }
 
   override writeSocket(command: string) {
@@ -39,7 +35,10 @@ describe("OpenvpnCommands", () => {
     emitter.emit("data", "SUCCESS: killed");
     const result = await promise;
 
-    assert.deepStrictEqual(result, { success: true, raw: "SUCCESS: killed" });
+    assert.deepStrictEqual(result, {
+      success: true,
+      raw: "SUCCESS: killed",
+    });
     assert.deepStrictEqual(commands.sent, ["kill alice\r\n"]);
   });
 
