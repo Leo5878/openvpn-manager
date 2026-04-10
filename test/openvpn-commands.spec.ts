@@ -1,9 +1,9 @@
 import assert from "node:assert";
 import { EventEmitter } from "node:events";
-import { OpenvpnCommands } from "../src/command/openvpn-commands.js";
+import { Commands } from "../src/command/commands.js";
 import { OpenvpnCommandError } from "../src/error.js";
 
-class TestCommands extends OpenvpnCommands {
+class TestCommands extends Commands {
   public sent: string[] = [];
 
   constructor(emitter: EventEmitter) {

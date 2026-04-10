@@ -12,7 +12,7 @@ import {
   VersionInfo,
 } from "./response.types.js";
 
-export class OpenvpnCommands extends OpenvpnCore {
+export class Commands extends OpenvpnCore {
   /**
    * Очередь resolver-ов ожидающих команд.
    * Каждый вызов sendCommand кладёт сюда resolve своего промиса,

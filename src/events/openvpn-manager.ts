@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
-import { Event, InternalEvent } from "./Event.js";
-import { LoggerAdapter, Options } from "./core.js";
+import { Event, InternalEvent } from "../Event.js";
+import { LoggerAdapter, Options } from "../core.js";
 import type {
   ByteCount,
   ByteCountServer,
@@ -14,7 +14,7 @@ import type {
   RawConnectionClient,
   RsaSignRequest,
 } from "./event-responses.types.js";
-import type { Connect } from "./core.js";
+import type { Connect } from "../core.js";
 import {
   ClassifiedLine,
   classifyLog,
@@ -26,8 +26,8 @@ import {
   parseRsaSign,
   parseClientMetadata,
   parseClientStatus,
-} from "./parse.js";
-import { OpenvpnCommands } from "./command/openvpn-commands.js";
+} from "../parse.js";
+import { Commands } from "../command/commands.js";
 
 type EventKey = (typeof Event)[keyof typeof Event] & keyof InternalEventMap;
 export type Opts = {
@@ -38,7 +38,7 @@ export type Opts = {
 
 type ColCl = Set<string>;
 
-export class OpenvpnManager extends OpenvpnCommands {
+export class OpenvpnManager extends Commands {
   private eventEmitter: EventEmitter;
   private openVPNServer: Connect;
   private getStatusInterval: NodeJS.Timeout;

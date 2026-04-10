@@ -1,8 +1,8 @@
 import assert from "node:assert";
 import { EventEmitter } from "node:events";
-import { OpenvpnManager } from "../src/openvpn-manager.js";
+import { OpenvpnManager } from "../src/events/openvpn-manager.js";
 import { Event } from "../src/Event.js";
-import type { Cl } from "../src/event-responses.types.js";
+import type { Cl } from "../src/events/event-responses.types.js";
 
 class TestManager extends OpenvpnManager {
   public sent: string[] = [];
