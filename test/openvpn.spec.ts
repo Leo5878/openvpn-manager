@@ -92,7 +92,7 @@ END`;
   });
 
   it("должен вернуть event для ENV строки", () => {
-    const line = ">CLIENT:ENV,untrusted_ip=192.168.1.1";
+    const line = ">CLIENT:ESTABLISHED,10";
     const cl = classifyLog(line);
     assert.deepStrictEqual(cl, {
       type: "event",
@@ -114,7 +114,7 @@ END`;
     const cl = classifyLog(line);
     assert.deepStrictEqual(cl, {
       type: "event",
-      event: "CLIENT_DISCONNECT",
+      event: "REMOTE_EXIT",
       raw: "unknown",
     });
   });

@@ -50,10 +50,14 @@ export class OpenvpnManager extends OpenvpnCommands {
 
     this.handleCommand();
     void this.ready.then(() => {
-      this.getStatusUsersInterval(opts?.statusInterval ?? 5000);
+      if (opts?.statusInterval !== undefined) {
+        this.logger.debug("Try check disconnected client is enabled");
+        // subscribe for event disconnected clients
+        this.getStatusUsersInterval(opts?.statusInterval ?? 5000);
+        this.dispatchDisconnectClient();
+      }
     });
 
-    this.dispatchDisconnectClient();
   }
 
   on<K extends EventKey>(event: K, listener: (arg: EventMap[K]) => void) {
@@ -89,7 +93,7 @@ export class OpenvpnManager extends OpenvpnCommands {
   private handleCommand() {
     this.eventEmitter.on("data", async (data: string) => {
       if (this.debug) {
-        console.debug(data);
+        this.logger.debug(data);
       }
 
       const classify = classifyLog(data);
@@ -111,12 +115,16 @@ export class OpenvpnManager extends OpenvpnCommands {
           this.byteCount(parseByteCountServer(classify.raw));
           break;
         case "ESTABLISHED":
-          this.establishedClient(await this.processClient(classify.raw));
+          this.establishedClient(this.processClient(classify.raw));
           break;
         case "CONNECT":
-          this.connectClient(await this.processClient(classify.raw));
+        case "REAUTH":
+          this.connectClient(this.processClient(classify.raw));
           break
-        case "CLIENT_DISCONNECT":
+        case "DISCONNECT":
+          this.disconnectClient(this.processClient(classify.raw));
+          break;
+        case "REMOTE_EXIT":
           this.logger.debug("write socket status. Is event disconnected");
           this.writeSocket("status 2\r\n");
           break;
@@ -152,9 +160,11 @@ export class OpenvpnManager extends OpenvpnCommands {
 
     this.eventEmitter.on(Event.CLIENT_LIST, (data: Cl[]) => {
       for (const { commonName } of data) {
-        if (commonName !== "UNDEF") {
-          prev.add(commonName);
+        if (commonName === "UNDEF") {
+          continue;
         }
+
+        prev.add(commonName);
       }
     });
 
@@ -274,7 +284,7 @@ export class OpenvpnManager extends OpenvpnCommands {
     }
   }
 
-  private async preProcessEnv(response: string[][]) {
+  private preProcessEnv(response: string[][]) {
     const oc = Object.fromEntries(response) as RawConnectionClient;
     const client: ConnectionEvent = {
       id: this.openVPNServer.id,
@@ -328,13 +338,39 @@ export class OpenvpnManager extends OpenvpnCommands {
     return client;
   }
 
+  /**
+   * Notify new client connection **("CONNECT")** or existing client TLS session
+   * renegotiation **("REAUTH")**. Information about the client is provided
+   * by a list of environmental variables which are documented in the OpenVPN
+   * man page. The environmental variables passed are equivalent to those
+   * that would be passed to an *--auth-user-pass-verify script*.
+   * @param client
+   * @private
+   */
   private connectClient(client: ConnectionEvent) {
     this.eventEmitter.emit(Event.CLIENT_CONNECT, client);
   }
 
+  /**
+   * Notify successful client authentication and session initiation.
+   * Called after **CONNECT**.
+   * @param client
+   * @private
+   */
   private establishedClient(client: ConnectionEvent) {
     this.active.add(client.commonName);
     this.eventEmitter.emit(Event.CLIENT_ESTABLISHED, client);
+  }
+
+  /**
+   * Notify existing client disconnection.  The environmental variables passed
+   * are equivalent to those that would be passed to a *--client-disconnect script*.
+   * @param client
+   * @private
+   */
+  private disconnectClient(client: ConnectionEvent) {
+    this.active.delete(client.commonName);
+    this.eventEmitter.emit(Event.CLIENT_DISCONNECTION, client);
   }
 
   private processClient(raw: string) {

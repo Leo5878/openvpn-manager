@@ -20,6 +20,7 @@ class TestManager extends OpenvpnManager {
         },
         debug: false,
         reconnect: "never",
+        statusInterval: 3000,
       },
     );
   }

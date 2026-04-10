@@ -1,6 +1,4 @@
 type Event =
-  | "ESTABLISHED"
-  | "CONNECT"
   | "BYTECOUNT"
   | "BYTECOUNT_CLI"
   | "CLIENT_LIST"
@@ -9,17 +7,25 @@ type Event =
   | "PASSWORD"
   | "RSA_SIGN";
 
+type EventConnection =
+  | "ESTABLISHED"
+  | "CONNECT"
+  | "DISCONNECT"
+  | "REAUTH"
+
 export type ClassifiedLine =
   | { type: "data"; event: Event; raw: string }
-  | { type: "event"; event: Event; raw: string }
-  | { type: "event"; event: "CLIENT_DISCONNECT"; raw: "unknown" }
+  | { type: "event"; event: Event | EventConnection; raw: string }
+  | { type: "event"; event: "REMOTE_EXIT"; raw: "unknown" }
   | { type: "unknown"; raw: string };
 
 export function classifyLog(event: string): ClassifiedLine {
-  const eventReg = new RegExp(/>\w+:ENV/);
+  const eventReg = />CLIENT:(\w+)/;
 
+  // TODO проверить, что не будет пересечений с другими статусами
   if (eventReg.test(event)) {
-    return { type: "event", event: "ESTABLISHED", raw: event };
+    const nt = eventReg.exec(event)[1] as EventConnection;
+    return { type: "event", event: nt, raw: event };
   }
 
   if (event.includes(">BYTECOUNT_CLI")) {
@@ -28,10 +34,6 @@ export function classifyLog(event: string): ClassifiedLine {
 
   if (event.includes("CLIENT_LIST")) {
     return { type: "data", event: "CLIENT_LIST", raw: event };
-  }
-
-  if (event.includes(">CLIENT:CONNECT")) {
-    return { type: "event", event: "CONNECT", raw: event };
   }
 
   if (event.includes(">BYTECOUNT:")) {
@@ -55,7 +57,7 @@ export function classifyLog(event: string): ClassifiedLine {
   }
 
   if (event.includes(">NOTIFY:info,remote-exit,EXIT")) {
-    return { type: "event", event: "CLIENT_DISCONNECT", raw: "unknown" };
+    return { type: "event", event: "REMOTE_EXIT", raw: "unknown" };
   }
 
   return { type: "unknown", raw: event };
@@ -63,8 +65,9 @@ export function classifyLog(event: string): ClassifiedLine {
 
 export function parseClientMetadata(raw: string) {
   return raw
-    .replace(">NOTIFY:info,remote-exit,EXIT", "")
-    .replace(/>CLIENT:(ESTABLISHED|CONNECT|REAUTH),(\d+)/, "clientID=$2")
+    // TODO check
+    // .replace(">NOTIFY:info,remote-exit,EXIT", "")
+    .replace(/>CLIENT:(ESTABLISHED|DISCONNECT|CONNECT|REAUTH),(\d+)/, "clientID=$2")
     .replace(">CLIENT:ENV,END", "")
     .trim()
     .split("\r\n")
