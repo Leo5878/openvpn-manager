@@ -90,15 +90,10 @@ export function parseByteCount(raw: string) {
 }
 
 export function parseByteCountServer(raw: string) {
-  const [bytesReceived, bytesSent] = raw
+  return raw
     .substring(raw.indexOf(":") + 1)
     .split(",")
     .map(Number);
-
-  return {
-    bytesReceived,
-    bytesSent,
-  };
 }
 
 export function parseLog(raw: string) {

@@ -203,11 +203,11 @@ export class OpenvpnManager extends Commands {
     }
   }
 
-  private byteCount(res: Omit<ByteCountServer, "id">) {
+  private byteCount([bytesReceived, bytesSent]: number[]) {
     const data: ByteCountServer = {
       id: this.openVPNServer.id,
-      bytesReceived: res.bytesReceived,
-      bytesSent: res.bytesSent,
+      bytesReceived,
+      bytesSent,
     };
 
     this.eventEmitter.emit(Event.BYTECOUNT, data);
