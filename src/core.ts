@@ -55,7 +55,7 @@ export class OpenvpnCore {
       this.readyResolver = resolve;
     });
 
-    this.reconnectAbort = new AbortController()
+    this.reconnectAbort = new AbortController();
   }
 
   public connect() {
