@@ -1,6 +1,6 @@
 import { EventEmitter } from "node:events";
 import { Event, InternalEvent } from "../Event.js";
-import { LoggerAdapter, Options } from "../core.js";
+import { Connect, LoggerAdapter, Options } from "../core.js";
 import {
   ByteCount,
   ByteCountServer,
@@ -14,20 +14,18 @@ import {
   RawConnectionClient,
   RsaSignRequest,
 } from "./event-responses.types.js";
-import type { Connect } from "../core.js";
 import {
   ClassifiedLine,
   classifyLog,
   parseByteCount,
-  parseByteCountServer,
+  parseByteCountServer, parseClientMetadata,
+  parseClientStatus,
   parseHold,
   parseLog,
   parsePassword,
   parseRsaSign,
-  parseClientMetadata,
-  parseClientStatus,
 } from "../parse.js";
-import { Commands } from "../command/commands.js";
+import {Commands} from "../command/commands.js";
 
 type EventKey = (typeof Event)[keyof typeof Event] & keyof InternalEventMap;
 type Listener<T> = [T] extends [void] ? () => void : (args: T) => void;

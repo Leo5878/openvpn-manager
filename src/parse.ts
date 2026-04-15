@@ -61,14 +61,56 @@ export function classifyLog(event: string): ClassifiedLine {
   return { type: "unknown", raw: event };
 }
 
+/**
+ * (1) Notify new client connection ("CONNECT") or existing client TLS session
+ *     renegotiation ("REAUTH").  Information about the client is provided
+ *     by a list of environmental variables which are documented in the OpenVPN
+ *     man page.  The environmental variables passed are equivalent to those
+ *     that would be passed to an --auth-user-pass-verify script.
+ *
+ *     >CLIENT:CONNECT|REAUTH,{CID},{KID} -- один тип 0
+ *     >CLIENT:ENV,name1=val1
+ *     >CLIENT:ENV,name2=val2
+ *     >CLIENT:ENV,...
+ *     >CLIENT:ENV,END
+ *
+ * (2) Notify successful client authentication and session initiation.
+ *     Called after CONNECT.
+ *
+ *     >CLIENT:ESTABLISHED,{CID} -- один тип 1
+ *     >CLIENT:ENV,name1=val1
+ *     >CLIENT:ENV,name2=val2
+ *     >CLIENT:ENV,...
+ *     >CLIENT:ENV,END
+ *
+ * (3) Notify existing client disconnection.  The environmental variables passed
+ *     are equivalent to those that would be passed to a --client-disconnect
+ *     script.
+ *
+ *     >CLIENT:DISCONNECT,{CID} -- один тип 1
+ *     >CLIENT:ENV,name1=val1
+ *     >CLIENT:ENV,name2=val2
+ *     >CLIENT:ENV,...
+ *     >CLIENT:ENV,END
+ *
+ * (4) Notify that a particular virtual address or subnet
+ *     is now associated with a specific client.
+ *
+ *     >CLIENT:ADDRESS,{CID},{ADDR},{PRI}
+ * @param raw
+ */
+
 export function parseClientMetadata(raw: string) {
   return (
     raw
       // TODO check
       // .replace(">NOTIFY:info,remote-exit,EXIT", "")
       .replace(
-        />CLIENT:(ESTABLISHED|DISCONNECT|CONNECT|REAUTH),(\d+)/,
-        "clientID=$2",
+          />CLIENT:(?:CONNECTION|REAUTH|ESTABLISHED|DISCONNECT),(\d+)(?:,(\d+))?/,
+          (_, clientID, keyId) =>
+              keyId !== undefined
+                  ? `clientID=${clientID}\r\nkeyId=${keyId}`
+                  : `clientID=${clientID}`
       )
       .replace(">CLIENT:ENV,END", "")
       .trim()

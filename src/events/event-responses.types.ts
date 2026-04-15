@@ -268,6 +268,12 @@ export interface ConnectionEvent<T = OpenVPNPlatform> extends Base {
   devType: string;
 }
 
+export interface BaseKid extends ConnectionEvent{
+  kid: string;
+}
+
+export type connectOrReAuth = BaseKid
+
 export interface ByteCount extends Base {
   /** Unique client ID assigned by the OpenVPN server for this session. */
   clientID: number;
@@ -334,6 +340,7 @@ export interface SocketError {
   err: unknown;
 }
 
+// connectOrReAuth
 export interface EventMap {
   // Event where client connection to openvpn server
   [Event.CLIENT_CONNECT]: ConnectionEvent;
