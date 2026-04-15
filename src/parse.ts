@@ -20,8 +20,10 @@ export function classifyLog(event: string): ClassifiedLine {
 
   // TODO проверить, что не будет пересечений с другими статусами
   if (eventReg.test(event)) {
-    const nt = eventReg.exec(event)[1] as EventConnection;
-    return { type: "event", event: nt, raw: event };
+    const nt = eventReg.exec(event)?.[1];
+    if (nt) {
+      return {type: "event", event: nt as EventConnection, raw: event};
+    }
   }
 
   if (event.includes(">BYTECOUNT_CLI")) {

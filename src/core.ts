@@ -27,7 +27,7 @@ export interface Options {
 }
 
 export class OpenvpnCore {
-  public socket: Socket;
+  public socket!: Socket;
   private readonly openvpnServer: Connect;
   private prefixLog = "openvpn";
   protected reconnectTime: number = 10000; // milliseconds. 10 second
@@ -35,7 +35,7 @@ export class OpenvpnCore {
   protected debug: boolean;
   protected reconnectRule: "always" | "never" | "manual";
   protected logger: LoggerAdapter;
-  protected reconnectAbort?: AbortController;
+  protected reconnectAbort: AbortController;
 
   private readyResolver!: () => void;
   private reconnectState: boolean = false;
@@ -54,12 +54,14 @@ export class OpenvpnCore {
     this.ready = new Promise((resolve) => {
       this.readyResolver = resolve;
     });
+
+    this.reconnectAbort = new AbortController()
   }
 
   public connect() {
     if (this.reconnectAbort) {
       this.reconnectAbort.abort();
-      this.reconnectAbort = undefined;
+      // this.reconnectAbort = undefined;
     }
 
     if (this.connecting) {
@@ -213,9 +215,9 @@ export class OpenvpnCore {
     this.logger.info(
       `Reconnecting to server ${id} ${host}:${port} in ${timeUnit}`,
     );
+
+    // this.reconnectAbort = new AbortController();
     this.reconnectAbort.abort();
-    // TODO Проверить для чего он тут нужен
-    this.reconnectAbort = new AbortController();
 
     try {
       await delay(this.reconnectTime, {
@@ -226,9 +228,9 @@ export class OpenvpnCore {
         return;
       }
       throw error;
-    } finally {
+    } /*finally {
       this.reconnectAbort = undefined;
-    }
+    }*/
 
     await this.connect();
   }
@@ -259,7 +261,7 @@ export class OpenvpnCore {
       this.reconnectState = false;
       if (this.reconnectAbort) {
         this.reconnectAbort.abort();
-        this.reconnectAbort = undefined;
+        // this.reconnectAbort = undefined;
       }
       if (this.socket) {
         return this.socket.end(() => {

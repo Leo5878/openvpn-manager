@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
 import { Event, InternalEvent } from "../Event.js";
 import { LoggerAdapter, Options } from "../core.js";
-import type {
+import {
   ByteCount,
   ByteCountServer,
   Cl,
@@ -30,6 +30,7 @@ import {
 import { Commands } from "../command/commands.js";
 
 type EventKey = (typeof Event)[keyof typeof Event] & keyof InternalEventMap;
+type Listener<T> = [T] extends [void] ? () => void : (args: T) => void;
 export type Opts = {
   emitter?: EventEmitter;
   statusInterval?: number;
@@ -41,7 +42,7 @@ type ColCl = Set<string>;
 export class OpenvpnManager extends Commands {
   private eventEmitter: EventEmitter;
   private openVPNServer: Connect;
-  private getStatusInterval: NodeJS.Timeout;
+  private getStatusInterval?: NodeJS.Timeout;
   // public commands:
 
   private active: ColCl = new Set();
@@ -59,21 +60,21 @@ export class OpenvpnManager extends Commands {
       if (opts?.statusInterval !== undefined) {
         this.logger.debug("Try check disconnected client is enabled");
         // subscribe for event disconnected clients
-        this.getStatusUsersInterval(opts?.statusInterval ?? 5000);
+        this.getStatusUsersInterval(opts.statusInterval ?? 5000);
         this.dispatchDisconnectClient();
       }
     });
   }
 
-  on<K extends EventKey>(event: K, listener: (arg: EventMap[K]) => void) {
+  on<K extends EventKey>(event: K, listener: Listener<EventMap[K]>): void {
     this.eventEmitter.on(event, listener);
   }
 
-  off<K extends EventKey>(event: K, listener: (arg: EventMap[K]) => void) {
+  off<K extends EventKey>(event: K, listener: Listener<EventMap[K]>): void {
     this.eventEmitter.off(event, listener);
   }
 
-  once<K extends EventKey>(event: K, listener: (arg: EventMap[K]) => void) {
+  once<K extends EventKey>(event: K, listener: Listener<EventMap[K]>): void {
     this.eventEmitter.once(event, listener);
   }
 
@@ -386,7 +387,10 @@ export class OpenvpnManager extends Commands {
    * Метод завершает корректно работу всех таймеров, слушателей и сокетов
    */
   public async shutdown() {
-    clearTimeout(this.getStatusInterval);
+    if (this.getStatusInterval) {
+      clearTimeout(this.getStatusInterval);
+    }
+
     this.writeSocket("quit\r\n");
     await this.endSocket();
     this.eventEmitter.removeAllListeners();

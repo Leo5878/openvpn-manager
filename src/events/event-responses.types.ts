@@ -1,7 +1,7 @@
 import { Event, InternalEvent } from "../Event.js";
 
-export type CustomEventType = {
-  [K in keyof EventMap]: [EventMap[K]];
+export type OpenvpnEventEmitter = {
+  [K in keyof EventMap]: [EventMap[K]] extends [void] ? [] : [EventMap[K]];
 };
 
 interface Base {
