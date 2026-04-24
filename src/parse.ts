@@ -97,6 +97,7 @@ export function classifyLog(event: string): ClassifiedLine {
  *     is now associated with a specific client.
  *
  *     >CLIENT:ADDRESS,{CID},{ADDR},{PRI}
+ * OpenVPN doc: {@link https://openvpn.net/community-docs/management-interface.html#management-interface|Management Interface}
  * @param raw
  */
 
@@ -106,22 +107,22 @@ export function parseClientMetadata(raw: string) {
       // TODO check
       // .replace(">NOTIFY:info,remote-exit,EXIT", "")
       .replace(
-          />CLIENT:(?:CONNECTION|REAUTH|ESTABLISHED|DISCONNECT),(\d+)(?:,(\d+))?/,
-          (_, clientID, keyId) =>
-              keyId !== undefined
-                  ? `clientID=${clientID}\r\nkeyId=${keyId}`
-                  : `clientID=${clientID}`
+        />CLIENT:(?:CONNECT|REAUTH|ESTABLISHED|DISCONNECT),(\d+)(?:,(\d+))?/,
+        (_, clientID, keyId) =>
+          keyId !== undefined
+            ? `clientID=${clientID}\r\nkeyId=${keyId}`
+            : `clientID=${clientID}`,
       )
       .replace(">CLIENT:ENV,END", "")
       .trim()
-      .split("\r\n")
+      .split(/\r?\n/)
       .map((i) => i.slice(i.indexOf(",") + 1).split("="))
   );
 }
 
 export function parseClientStatus(clientsListRaw: string) {
   return clientsListRaw
-    .split("\r\n")
+    .split(/\r?\n/)
     .filter((r) => r.startsWith("CLIENT_LIST"))
     .map((i) => i.split(","));
 }

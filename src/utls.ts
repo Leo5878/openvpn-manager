@@ -1,10 +1,14 @@
-import { LoggerAdapter } from "./core.js";
+import { LoggerAdapter } from "./core/core.js";
 
-export function createDefaultLogger(): LoggerAdapter {
+export function createDefaultLogger(debug: boolean): LoggerAdapter {
   return {
     info: console.log.bind(console),
     error: console.error.bind(console),
     warn: console.warn.bind(console),
-    debug: console.debug.bind(console),
+    debug: () => {
+      if (debug) {
+        console.debug.bind(console);
+      }
+    },
   };
 }

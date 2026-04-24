@@ -3,8 +3,12 @@ import { setTimeout as delay } from "node:timers/promises";
 import { EventEmitter } from "node:events";
 import { Event } from "../Event.js";
 import { createDefaultLogger } from "../utls.js";
-import { OpenvpnResponseParser, ResponseType, ParsedResponse } from "./OpenvpnResponseParser.js";
-import { HandshakeController, HandshakeState } from "./HandshakeController.js";
+import {
+  ResponseParser,
+  ResponseType,
+  ParsedResponse,
+} from "./response-parser.js";
+import { HandshakeController, HandshakeState, HoldMode } from "./handhshake.js";
 
 export interface Connect {
   id: string;
@@ -26,6 +30,8 @@ export interface Options {
   debug?: boolean;
   reconnect?: "always" | "never" | "manual";
   logger?: LoggerAdapter;
+  holdMode?: "enabled" | "disabled" | "auto"; // НОВОЕ
+  holdWaitTimeMs?: number; // НОВОЕ
 }
 
 export class OpenvpnCore {
@@ -39,15 +45,18 @@ export class OpenvpnCore {
   protected debug: boolean;
   protected reconnectRule: "always" | "never" | "manual";
   protected logger: LoggerAdapter;
-  protected reconnectAbort: AbortController;
+  protected reconnectAbort!: AbortController;
 
   private readyResolver!: () => void;
   private reconnectState: boolean = false;
   private connecting: boolean = false;
 
-  // Новые компоненты парсинга
-  private parser: OpenvpnResponseParser;
+  private parser: ResponseParser = new ResponseParser();
   private handshake: HandshakeController;
+  private holdMode: HoldMode;
+  private holdWaitTimeMs: number;
+  private settleHandshakeResolve?: () => void;
+  private settleHandshakeReject?: (error: Error) => void;
 
   // Буфер для неполных строк
   private parserBuffer: Buffer = Buffer.alloc(0);
@@ -66,28 +75,47 @@ export class OpenvpnCore {
       this.readyResolver = resolve;
     });
 
-    this.reconnectAbort = new AbortController();
+    this.holdWaitTimeMs = opts.holdWaitTimeMs ?? 100;
 
-    // Инициализируем парсер и handshake контроллер
-    this.parser = new OpenvpnResponseParser();
-    this.handshake = new HandshakeController({
-      onHelloReceived: () => this.onHelloReceived(),
-      onHoldReceived: () => this.onHoldReceived(),
-      onComplete: () => this.onHandshakeComplete(),
-      onFailed: (error) => this.onHandshakeFailed(error),
-      onSendCommand: (cmd) => this.writeSocket(cmd),
-    });
+    // Преобразуем опцию в enum
+    let holdMode: HoldMode;
+    switch (opts.holdMode) {
+      case "enabled":
+        holdMode = HoldMode.ENABLED;
+        break;
+      case "disabled":
+        holdMode = HoldMode.DISABLED;
+        break;
+      default:
+        holdMode = HoldMode.AUTO;
+    }
+
+    this.holdMode = holdMode;
+
+    // Инициализируем handshake с режимом
+    this.handshake = new HandshakeController(
+      {
+        onHelloReceived: () => this.onHelloReceived(),
+        onHoldReceived: () => this.onHoldReceived(),
+        onComplete: () => this.onHandshakeComplete(),
+        onFailed: (error) => this.onHandshakeFailed(error),
+        onSendCommand: (cmd) => this.writeSocket(cmd),
+      },
+      holdMode,
+      this.holdWaitTimeMs,
+    );
   }
 
   public connect() {
     if (this.reconnectAbort) {
       this.reconnectAbort.abort();
     }
+
     this.reconnectAbort = new AbortController();
 
     if (this.connecting) {
       this.logger.warn(
-          "Connection attempt skipped: already connecting or connected",
+        "Connection attempt skipped: already connecting or connected",
       );
       return Promise.resolve();
     }
@@ -106,12 +134,11 @@ export class OpenvpnCore {
     return new Promise<void>((resolve, reject) => {
       let isSettled = false;
       const handshakeTimeoutMs =
-          this.openvpnServer.timeout ??
-          OpenvpnCore.DEFAULT_HANDSHAKE_TIMEOUT_MS;
+        this.openvpnServer.timeout ?? OpenvpnCore.DEFAULT_HANDSHAKE_TIMEOUT_MS;
 
       const handshakeTimeout = setTimeout(() => {
         const timeoutError = new Error(
-            `Handshake timeout with ${this.openvpnServer.id} ` +
+          `Handshake timeout with ${this.openvpnServer.id} ` +
             `(${this.openvpnServer.host}:${this.openvpnServer.port}) ` +
             `- state: ${this.handshake.getState()}`,
         );
@@ -125,18 +152,20 @@ export class OpenvpnCore {
         this.connecting = false;
         this.socket.destroy();
         void this.reconnect()
-            .then(resolveOnce)
-            .catch((error: unknown) => {
-              const reconnectError =
-                  error instanceof Error ? error : new Error(String(error));
-              rejectOnce(reconnectError);
-            });
+          .then(resolveOnce)
+          .catch((error: unknown) => {
+            const reconnectError =
+              error instanceof Error ? error : new Error(String(error));
+            rejectOnce(reconnectError);
+          });
       }, handshakeTimeoutMs);
 
       const resolveOnce = () => {
         if (isSettled) return;
         isSettled = true;
         clearTimeout(handshakeTimeout);
+        this.settleHandshakeResolve = undefined;
+        this.settleHandshakeReject = undefined;
         resolve();
       };
 
@@ -145,17 +174,18 @@ export class OpenvpnCore {
         isSettled = true;
         clearTimeout(handshakeTimeout);
         this.connecting = false;
+        this.settleHandshakeResolve = undefined;
+        this.settleHandshakeReject = undefined;
         reject(error);
       };
 
-      this.bindConnectionLifecycle(resolveOnce, rejectOnce);
+      this.settleHandshakeResolve = resolveOnce;
+      this.settleHandshakeReject = rejectOnce;
+      this.bindConnectionLifecycle(rejectOnce);
     });
   }
 
-  private bindConnectionLifecycle(
-      resolveOnce: () => void,
-      rejectOnce: (error: Error) => void,
-  ) {
+  private bindConnectionLifecycle(rejectOnce: (error: Error) => void) {
     this.socket.once("error", (error: Error) => {
       if (this.reconnectState) {
         this.connectionError(error);
@@ -173,7 +203,7 @@ export class OpenvpnCore {
       this.handshake.reset();
       this.handshake.start();
 
-      this.setHandlers(resolveOnce);
+      this.setHandlers();
     });
 
     this.socket.once("close", () => {
@@ -185,40 +215,44 @@ export class OpenvpnCore {
     });
   }
 
+
+
   private onHelloReceived() {
-    this.logger.info(
-        `Management hello received from ${this.openvpnServer.id}`,
-    );
+    this.logger.info(`Management hello received from ${this.openvpnServer.id}`);
   }
 
   private onHoldReceived() {
     this.logger.debug(
-        `Hold command received from ${this.openvpnServer.id}, sending hold release`,
+      `Hold command received from ${this.openvpnServer.id}, sending hold release`,
     );
   }
 
   private onHandshakeComplete() {
-    this.logger.info(
-        `Handshake complete with ${this.openvpnServer.id}`,
-    );
+    this.logger.info(`Handshake complete with ${this.openvpnServer.id}`);
     this.reconnectState = true;
     this.connecting = false;
     this.readyResolver();
+    this.settleHandshakeResolve?.();
   }
 
   private onHandshakeFailed(error: Error) {
     this.logger.error(`Handshake failed: ${error.message}`);
+    this.settleHandshakeReject?.(error);
     this.emitter.emit(Event.SOCKET_ERROR, {
       openvpnId: this.openvpnServer.id,
       err: error,
     });
   }
 
-  public setHandlers(_onManagementHello?: () => void) {
+  public setHandlers() {
     try {
       if (!this.socket) {
         throw new Error("Socket is undefined");
       }
+
+      this.socket.once("connect", () => {
+        this.socket.setKeepAlive(true);
+      });
 
       this.socket.on("data", (chunk: Buffer) => {
         this.processIncomingChunk(chunk);
@@ -257,10 +291,13 @@ export class OpenvpnCore {
       return;
     }
 
-    // Игнорируем другие события до завершения handshake
-    if (!this.handshake.isComplete()) {
+    // Игнорируем другие события только когда handshake реально идёт
+    if (
+      this.handshake.getState() !== HandshakeState.IDLE &&
+      !this.handshake.isComplete()
+    ) {
       this.logger.debug(
-          `Ignoring response during handshake (state: ${this.handshake.getState()}): ${parsed.raw}`,
+        `Ignoring response during handshake (state: ${this.handshake.getState()}): ${parsed.raw}`,
       );
       return;
     }
@@ -270,7 +307,7 @@ export class OpenvpnCore {
   }
 
   /**
-   * Обработать распарсенный ответ от OpenVPN
+   * Обработать распаршенный ответ от OpenVPN
    */
   private handleParsedResponse(parsed: ParsedResponse) {
     switch (parsed.type) {
@@ -326,10 +363,10 @@ export class OpenvpnCore {
   public async reconnect() {
     const { host, port, id } = this.openvpnServer;
     const timeUnit =
-        this.reconnectTime >= 1000 ? `${this.reconnectTime / 1000}s` : "ms";
+      this.reconnectTime >= 1000 ? `${this.reconnectTime / 1000}s` : "ms";
 
     this.logger.info(
-        `Reconnecting to server ${id} ${host}:${port} in ${timeUnit}`,
+      `Reconnecting to server ${id} ${host}:${port} in ${timeUnit}`,
     );
 
     this.reconnectAbort.abort();

@@ -32,7 +32,11 @@ export const Event = {
   CLIENT_LIST: "client:list",
   ROUTING_TABLE: "routing:table",
   SERVER_TIME: "server:time",
-  CLIENT_DISCONNECTION: "client:disconnect",
+  CLIENT_DISCONNECT: "client:disconnect",
+  CLIENT_DISCONNECT_INFERRED: "client:disconnect:inferred",
+  // Backward-compatible aliases
+  CLIENT_DISCONNECT_EVENT: "client:disconnect",
+  CLIENT_DISCONNECTION: "client:disconnect:inferred",
 } as const;
 
 export const InternalEvent = {

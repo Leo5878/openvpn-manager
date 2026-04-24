@@ -143,6 +143,21 @@ END`;
     ]);
   });
 
+  it("parseClientMetadata parses CID and KID for CONNECT/REAUTH", () => {
+    const raw = [
+      ">CLIENT:CONNECT,7,42",
+      "common_name=bob",
+      ">CLIENT:ENV,END",
+    ].join("\r\n");
+
+    const parsed = parseClientMetadata(raw);
+    assert.deepStrictEqual(parsed, [
+      ["clientID", "7"],
+      ["keyId", "42"],
+      ["common_name", "bob"],
+    ]);
+  });
+
   it("parseLog parses timestamp, flags and message", () => {
     assert.deepStrictEqual(
       parseLog(">LOG:1710000000,W,client disconnected unexpectedly"),

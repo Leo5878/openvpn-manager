@@ -1,6 +1,6 @@
 import assert from "node:assert";
 import { EventEmitter } from "node:events";
-import { OpenvpnCore } from "../src/core.js";
+import { OpenvpnCore } from "../src/core/core.js";
 
 class FakeSocket extends EventEmitter {
   public writes: string[] = [];

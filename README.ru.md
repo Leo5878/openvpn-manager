@@ -94,14 +94,15 @@ const api = new OpenvpnManager(
 
 Все события и интерфейсы можно посмотреть в файле с [типами](https://github.com/Leo5878/openvpn-manager/blob/main/src/event-responses.types.ts)
 
-| Событие              | Тип                | Описание                                                               |
-|----------------------|--------------------|------------------------------------------------------------------------|
-| `client:connection`  | `ConnectionEvent`  | Клиент прошёл аутентификацию, сессия создаётся. Туннель ещё не активен |
-| `client:established` | `ConnectionEvent`  | Туннель полностью поднят, клиент готов к передаче трафика              |
-| `client:list`        | `Cl[]`             | Список подключённых клиентов                                           |
-| `bytecount:cli`      | `ByteCount`        | Информация о трафике клиента                                           |
-| `client:disconnect`  | `ClientDisconnect` | Возвращается массив из CommonName (_планируется дополнить_)            |
-| `socket:error`       | `SocketError`      | Событие о возникновении ошибки с сокетом во время подключения          |
+| Событие                   | Тип                        | Описание                                                                |
+|---------------------------|----------------------------|-------------------------------------------------------------------------|
+| `client:connection`       | `ConnectionEvent`          | Клиент прошёл аутентификацию, сессия создаётся. Туннель ещё не активен  |
+| `client:established`      | `ConnectionEvent`          | Туннель полностью поднят, клиент готов к передаче трафика               |
+| `client:list`             | `Cl[]`                     | Список подключённых клиентов                                            |
+| `bytecount:cli`           | `ByteCount`                | Информация о трафике клиента                                            |
+| `client:disconnect`       | `ClientDisconnect`         | Возвращается массив из CommonName (_планируется дополнить_)             |
+| `client:disconnect:event` | `ClientEnvDisconnectEvent` | Сырой payload отключения из management-события `>CLIENT:DISCONNECT,...` |
+| `socket:error`            | `SocketError`              | Событие о возникновении ошибки с сокетом во время подключения           |
 
 ### client:list
 

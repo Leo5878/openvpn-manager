@@ -1,7 +1,7 @@
 import { EventEmitter } from "node:events";
-import { OpenvpnCore, Connect, Options } from "../core.js";
+import { OpenvpnCore, Connect, Options } from "../core/core.js";
 import { OpenvpnCommandError } from "../error.js";
-import {
+import type {
   AuthRetryMode,
   CommandResult,
   LoadStatsInfo,
@@ -37,6 +37,7 @@ export class Commands extends OpenvpnCore {
        * попадать в очередь ответов на команды. Блочные ответы `status 2`
        * тоже разбираются отдельно в OpenvpnManager.
        */
+      // this.logger.info(data);
       const isAsyncEvent = data.startsWith(">");
       const isStatusResponse =
         data.includes("CLIENT_LIST") ||

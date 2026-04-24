@@ -70,59 +70,66 @@ export interface Cl {
 }
 
 export interface RawConnectionClient {
-  connection: string;
-  clientID: number;
-  n_clients: string;
-  time_unix: string;
-  time_ascii: string;
-  ifconfig_pool_netmask: string;
-  ifconfig_pool_remote_ip: string;
-  trusted_port: string;
-  trusted_ip: string;
-  common_name: string;
-  IV_SSO: string;
-  IV_GUI_VER: string;
-  IV_AUTO_SESS: string;
-  IV_CIPHERS: string;
-  IV_MTU: string;
-  IV_PROTO: string;
-  IV_TCPNL: string;
-  IV_NCP: string;
-  IV_PLAT: string;
-  IV_VER: string;
-  IV_COMP_STUBv2: string;
-  IV_COMP_STUB: string;
-  IV_LZO_STUB: string;
-  untrusted_port: string;
-  untrusted_ip: string;
-  tls_serial_hex_0: string;
-  tls_serial_0: string;
-  tls_digest_sha256_0: string;
-  tls_digest_0: string;
-  tls_id_0: string;
-  X509_0_CN: string;
-  tls_serial_hex_1: string;
-  tls_serial_1: string;
-  tls_digest_sha256_1: string;
-  tls_digest_1: string;
-  tls_id_1: string;
-  X509_1_CN: string;
-  remote_port_1: string;
-  local_port_1: string;
-  proto_1: string;
-  daemon_pid: string;
-  daemon_start_time: string;
-  daemon_log_redirect: string;
-  daemon: string;
-  verb: string;
-  config: string;
-  ifconfig_local: string;
-  ifconfig_netmask: string;
-  script_context: string;
-  tun_mtu: string;
-  dev: string;
-  dev_type: string;
-  redirect_gateway: string;
+  connection: ClientEnvPhase;
+  // Parsed from >CLIENT:* header. Always a string before conversion.
+  clientID: string;
+  // Present for CONNECT/REAUTH: >CLIENT:CONNECT|REAUTH,{CID},{KID}
+  keyId?: string;
+  n_clients?: string;
+  time_unix?: string;
+  time_ascii?: string;
+  ifconfig_pool_netmask?: string;
+  ifconfig_pool_remote_ip?: string;
+  trusted_port?: string;
+  trusted_ip?: string;
+  common_name?: string;
+  username?: string;
+  password?: string;
+  IV_SSO?: string;
+  IV_GUI_VER?: string;
+  IV_AUTO_SESS?: string;
+  IV_CIPHERS?: string;
+  IV_MTU?: string;
+  IV_PROTO?: string;
+  IV_TCPNL?: string;
+  IV_NCP?: string;
+  IV_PLAT?: string;
+  IV_VER?: string;
+  IV_COMP_STUBv2?: string;
+  IV_COMP_STUB?: string;
+  IV_LZO_STUB?: string;
+  untrusted_port?: string;
+  untrusted_ip?: string;
+  tls_serial_hex_0?: string;
+  tls_serial_0?: string;
+  tls_digest_sha256_0?: string;
+  tls_digest_0?: string;
+  tls_id_0?: string;
+  X509_0_CN?: string;
+  tls_serial_hex_1?: string;
+  tls_serial_1?: string;
+  tls_digest_sha256_1?: string;
+  tls_digest_1?: string;
+  tls_id_1?: string;
+  X509_1_CN?: string;
+  remote_port_1?: string;
+  local_port_1?: string;
+  proto_1?: string;
+  daemon_pid?: string;
+  daemon_start_time?: string;
+  daemon_log_redirect?: string;
+  daemon?: string;
+  verb?: string;
+  config?: string;
+  ifconfig_local?: string;
+  ifconfig_netmask?: string;
+  script_context?: string;
+  tun_mtu?: string;
+  dev?: string;
+  dev_type?: string;
+  redirect_gateway?: string;
+  bytes_sent?: string;
+  bytes_received?: string;
 }
 
 /**
@@ -131,7 +138,7 @@ export interface RawConnectionClient {
 /**
  * Represents server-side initialization data sent by an OpenVPN or similar service.
  */
-export interface ConnectionEvent<T = OpenVPNPlatform> extends Base {
+export interface ClientCommonEvent<T = OpenVPNPlatform> extends Base {
   /** Unique client ID assigned by the OpenVPN server for this session */
   clientID: number;
 
@@ -139,28 +146,10 @@ export interface ConnectionEvent<T = OpenVPNPlatform> extends Base {
    * Current connection status of the client.
    * Examples: "CONNECTED", "DISCONNECTED", "RECONNECTING".
    */
-  connection: string;
+  connection: ClientEnvPhase;
 
   /** Number of active clients connected to this server. */
-  n_clients: string;
-
-  /** Current timestamp in Unix time (seconds since epoch). */
-  timeUnix: number;
-
-  /** Current timestamp in human-readable ISO format (UTC). */
-  timeAscii: Date;
-
-  /** Netmask of the address pool assigned to VPN clients. */
-  ifconfigPollNetmask: string;
-
-  /** IP address from the pool assigned to the current client. */
-  ifconfigPoolRemoteIp: string;
-
-  /** Trusted port number from which the client connection was accepted. */
-  trustedPort: number;
-
-  /** Trusted IP address of the client as seen by the server. */
-  trustedIp: string;
+  n_clients?: string;
 
   /** Common Name (CN) extracted from the client's certificate. */
   commonName: string;
@@ -186,7 +175,7 @@ export interface ConnectionEvent<T = OpenVPNPlatform> extends Base {
     proto: number;
 
     /** Supported cipher list by the client. */
-    ciphers: string[];
+    ciphers?: string[];
 
     /** Network Crypto Provider version. */
     ncp: string;
@@ -205,74 +194,121 @@ export interface ConnectionEvent<T = OpenVPNPlatform> extends Base {
   };
 
   /** Untrusted port number before TLS verification (usually same as trustedPort). */
-  untrustedPort: number;
+  untrustedPort?: number;
 
   /** Untrusted IP address before TLS verification (usually same as trustedIp). */
-  untrustedIp: string;
+  untrustedIp?: string;
 
   /** TLS identifier type for the first participant (usually "CN"). */
-  tlsId0: string;
+  tlsId0?: string;
 
   /** Common Name of the first TLS participant (the client). */
-  x509_0_cn: string;
+  x509_0_cn?: string;
 
   /** TLS identifier type for the second participant (usually "CN"). */
-  tlsId1: string;
+  tlsId1?: string;
 
   /** Common Name of the second TLS participant (the server). */
-  x509_1_cn: string;
+  x509_1_cn?: string;
 
   /** Client's remote port (source port used for the connection). */
-  remotePort1: number;
+  remotePort1?: number;
 
   /** Local server port where the connection was accepted. */
-  localPort1: number;
+  localPort1?: number;
 
   /** Connection protocol ("udp" or "tcp"). */
-  proto1: string;
+  proto1?: string;
 
   /** Process ID of the OpenVPN daemon handling this session. */
-  daemonPid: string;
+  daemonPid?: string;
 
   /** Daemon start time in Unix time. */
-  daemonStartTime: number;
+  daemonStartTime?: number;
 
   /** Indicates if log redirection is enabled ("1" = enabled). */
-  daemonLogRedirect: string;
+  daemonLogRedirect?: string;
 
   /** Daemon instance identifier (e.g., "0"). */
-  daemon: string;
+  daemon?: string;
 
   /** Verbosity level of the OpenVPN logs. */
-  verb: number;
+  verb?: number;
 
   /** Name of the OpenVPN configuration file used by this instance. */
-  config: string;
+  config?: string;
 
   /** Local VPN IP address of the server (e.g., 10.x.x.1). */
-  ifconfigLocal: string;
+  ifconfigLocal?: string;
 
   /** Subnet mask of the VPN interface. */
-  ifconfigNetmask: string;
+  ifconfigNetmask?: string;
 
   /** Script context (e.g., "init" means during initialization). */
-  scriptContext: string;
+  scriptContext?: string;
 
   /** MTU of the TUN interface. */
-  tunMtu: number;
+  tunMtu?: number;
 
   /** Name of the virtual interface (e.g., "tun0"). */
-  dev: string;
+  dev?: string;
 
   /** Type of the virtual interface ("tun" or "tap"). */
-  devType: string;
+  devType?: string;
 }
 
-export interface BaseKid extends ConnectionEvent{
-  kid: string;
+export interface ConnectionEvent<T = OpenVPNPlatform>
+  extends ClientCommonEvent<T> {
+  /** Current timestamp in Unix time (seconds since epoch). */
+  timeUnix?: number;
+
+  /** Current timestamp in human-readable ISO format (UTC). */
+  timeAscii?: Date;
+
+  /** Netmask of the address pool assigned to VPN clients. */
+  ifconfigPollNetmask?: string;
+
+  /** IP address from the pool assigned to the current client. */
+  ifconfigPoolRemoteIp?: string;
+
+  /** Trusted port number from which the client connection was accepted. */
+  trustedPort?: number;
+
+  /** Trusted IP address of the client as seen by the server. */
+  trustedIp?: string;
+
+  /** Traffic counters that usually arrive on DISCONNECT. */
+  bytesSent?: number;
+  bytesReceived?: number;
 }
 
-export type connectOrReAuth = BaseKid
+export type ClientEnvPhase =
+  | "CONNECT"
+  | "REAUTH"
+  | "ESTABLISHED"
+  | "DISCONNECT";
+
+/**
+ * CONNECT / REAUTH events must carry both CID and KID.
+ * KID is required for `client-auth` / `client-deny` commands.
+ */
+export type ClientConnectEvent = ClientCommonEvent & {
+  phase: "CONNECT" | "REAUTH";
+  keyId: number;
+};
+
+export type ClientEstablishedEvent = ConnectionEvent & {
+  phase: "ESTABLISHED";
+};
+
+export type ClientEnvDisconnectEvent = ConnectionEvent & {
+  phase: "DISCONNECT";
+};
+
+export type ClientEnvEvent =
+  | ClientConnectEvent
+  | ClientEstablishedEvent
+  | ClientEnvDisconnectEvent;
 
 export interface ByteCount extends Base {
   /** Unique client ID assigned by the OpenVPN server for this session. */
@@ -340,11 +376,10 @@ export interface SocketError {
   err: unknown;
 }
 
-// connectOrReAuth
 export interface EventMap {
   // Event where client connection to openvpn server
-  [Event.CLIENT_CONNECT]: ConnectionEvent;
-  [Event.CLIENT_ESTABLISHED]: ConnectionEvent;
+  [Event.CLIENT_CONNECT]: ClientConnectEvent;
+  [Event.CLIENT_ESTABLISHED]: ClientEstablishedEvent;
   [Event.BYTECOUNT]: ByteCountServer;
   [Event.BYTECOUNT_CLI]: ByteCount;
   [Event.HOLD]: HoldMessage;
@@ -355,7 +390,8 @@ export interface EventMap {
   [Event.CLIENT_LIST]: Cl[];
   [Event.ROUTING_TABLE]: void;
   [Event.SERVER_TIME]: void;
-  [Event.CLIENT_DISCONNECTION]: ClientDisconnect;
+  [Event.CLIENT_DISCONNECT_INFERRED]: ClientDisconnect;
+  [Event.CLIENT_DISCONNECT]: ClientEnvDisconnectEvent;
   [Event.SOCKET_ERROR]: SocketError;
   [Event.MANAGER_READY]: void;
 }
