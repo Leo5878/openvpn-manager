@@ -1,26 +1,22 @@
 import assert from "node:assert";
 import { EventEmitter } from "node:events";
-import { OpenvpnCommands } from "../src/openvpn-commands.js";
+import { Commands } from "../src/command/commands.js";
 import { OpenvpnCommandError } from "../src/error.js";
 
-class TestCommands extends OpenvpnCommands {
+class TestCommands extends Commands {
   public sent: string[] = [];
 
   constructor(emitter: EventEmitter) {
-    super(
-      { id: "test", host: "127.0.0.1", port: 9999 },
-      emitter,
-      {
-        debug: false,
-        reconnect: "never",
-        logger: {
-          info() {},
-          debug() {},
-          warn() {},
-          error() {},
-        },
+    super({ id: "test", host: "127.0.0.1", port: 9999 }, emitter, {
+      debug: false,
+      reconnect: "never",
+      logger: {
+        info() {},
+        debug() {},
+        warn() {},
+        error() {},
       },
-    );
+    });
   }
 
   override writeSocket(command: string) {
@@ -39,7 +35,10 @@ describe("OpenvpnCommands", () => {
     emitter.emit("data", "SUCCESS: killed");
     const result = await promise;
 
-    assert.deepStrictEqual(result, { success: true, raw: "SUCCESS: killed" });
+    assert.deepStrictEqual(result, {
+      success: true,
+      raw: "SUCCESS: killed",
+    });
     assert.deepStrictEqual(commands.sent, ["kill alice\r\n"]);
   });
 
@@ -53,6 +52,25 @@ describe("OpenvpnCommands", () => {
     });
 
     emitter.emit("data", "TITLE,OpenVPN 2.6.0");
+    await tick();
+    assert.strictEqual(resolved, false);
+
+    emitter.emit("data", "SUCCESS: killed");
+    await promise;
+    assert.strictEqual(resolved, true);
+  });
+
+  it("ignores async management events while waiting for a command reply", async () => {
+    const emitter = new EventEmitter();
+    const commands = new TestCommands(emitter);
+
+    let resolved = false;
+    const promise = commands.killClientByCn("alice").then(() => {
+      resolved = true;
+    });
+
+    emitter.emit("data", ">BYTECOUNT_CLI:7,10,20");
+    emitter.emit("data", ">LOG:1710000000,I,Initialization Sequence Completed");
     await tick();
     assert.strictEqual(resolved, false);
 

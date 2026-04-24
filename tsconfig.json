@@ -14,7 +14,8 @@
     // "rootDir": "src",
     "noLib": false,
     "noImplicitAny": false,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "strict": true
   },
   "include": [
     "src/**/*"

@@ -95,14 +95,15 @@ const api = new OpenvpnManager(
 
 All events and interfaces can be found in the [types file](https://github.com/Leo5878/openvpn-manager/blob/main/src/event-responses.types.ts)
 
-| Event                | Type               | Description                                                                                                                                                   |
-|----------------------|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `client:connection`  | `ConnectionEvent`  | Triggered when a client has authenticated and the session is being created. The tunnel is not yet active                                                      |
-| `client:established` | `ConnectionEvent`  | Triggered when a client has authenticated. The tunnel is not yet active — use clientAuth() to approve or clientDeny() to reject the connection at this point. |
-| `client:list`        | `Cl[]`             | List of connected clients                                                                                                                                     |
-| `bytecount:cli`      | `ByteCount`        | Client traffic information                                                                                                                                    |
-| `client:disconnect`  | `ClientDisconnect` | Returns an array of CommonName values (will be expanded)                                                                                                      |
-| `socket:error`       | `SocketError`      | Socket error during connection                                                                                                                                |
+| Event                     | Type                       | Description                                                                                                                                                   |
+|---------------------------|----------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `client:connection`       | `ConnectionEvent`          | Triggered when a client has authenticated and the session is being created. The tunnel is not yet active                                                      |
+| `client:established`      | `ConnectionEvent`          | Triggered when a client has authenticated. The tunnel is not yet active — use clientAuth() to approve or clientDeny() to reject the connection at this point. |
+| `client:list`             | `Cl[]`                     | List of connected clients                                                                                                                                     |
+| `bytecount:cli`           | `ByteCount`                | Client traffic information                                                                                                                                    |
+| `client:disconnect`       | `ClientDisconnect`         | Returns an array of CommonName values (will be expanded)                                                                                                      |
+| `client:disconnect:event` | `ClientEnvDisconnectEvent` | Raw disconnect payload from `>CLIENT:DISCONNECT,...` management event                                                                                         |
+| `socket:error`            | `SocketError`              | Socket error during connection                                                                                                                                |
 
 ### client:list
 

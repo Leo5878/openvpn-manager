@@ -1,5 +1,13 @@
 import assert from "node:assert";
-import { classifyLog, parseClientMetadata, parseClientStatus } from "../src/parse.js";
+import {
+  classifyLog,
+  parseClientMetadata,
+  parseClientStatus,
+  parseHold,
+  parseLog,
+  parsePassword,
+  parseRsaSign,
+} from "../src/parse.js";
 
 describe("classifyLine", () => {
   const clients = `TITLE,OpenVPN 2.6.14 [git:makepkg/f588592ee6c6323b+] x86_64-pc-linux-gnu [SSL (OpenSSL)] [LZO] [LZ4] [EPOLL] [PKCS11] [MH/PKTINFO] [AEAD] [DCO] built on Apr  2 2025\r
@@ -15,7 +23,7 @@ GLOBAL_STATS,dco_enabled,0\r
 END`;
 
   it("должен вернуть client для CLIENT_LIST", () => {
-    const cl = classifyLog(clients)
+    const cl = classifyLog(clients);
     assert.deepStrictEqual(cl, {
       type: "data",
       event: "CLIENT_LIST",
@@ -33,8 +41,58 @@ END`;
     });
   });
 
+  it("должен распознать LOG", () => {
+    const line = ">LOG:1710000000,I,Initialization Sequence Completed";
+    const cl = classifyLog(line);
+    assert.deepStrictEqual(cl, {
+      type: "event",
+      event: "LOG",
+      raw: line,
+    });
+  });
+
+  it("должен распознать BYTECOUNT", () => {
+    const line = ">BYTECOUNT:10,20";
+    const cl = classifyLog(line);
+    assert.deepStrictEqual(cl, {
+      type: "event",
+      event: "BYTECOUNT",
+      raw: line,
+    });
+  });
+
+  it("должен распознать HOLD", () => {
+    const line = ">HOLD:Waiting for hold release";
+    const cl = classifyLog(line);
+    assert.deepStrictEqual(cl, {
+      type: "event",
+      event: "HOLD",
+      raw: line,
+    });
+  });
+
+  it("должен распознать PASSWORD", () => {
+    const line = ">PASSWORD:Need 'Auth' username/password";
+    const cl = classifyLog(line);
+    assert.deepStrictEqual(cl, {
+      type: "event",
+      event: "PASSWORD",
+      raw: line,
+    });
+  });
+
+  it("должен распознать RSA_SIGN", () => {
+    const line = ">RSA_SIGN:Zm9v";
+    const cl = classifyLog(line);
+    assert.deepStrictEqual(cl, {
+      type: "event",
+      event: "RSA_SIGN",
+      raw: line,
+    });
+  });
+
   it("должен вернуть event для ENV строки", () => {
-    const line = ">CLIENT:ENV,untrusted_ip=192.168.1.1";
+    const line = ">CLIENT:ESTABLISHED,10";
     const cl = classifyLog(line);
     assert.deepStrictEqual(cl, {
       type: "event",
@@ -47,7 +105,7 @@ END`;
     const line = "TITLE,OpenVPN 2.6.14";
     assert.deepStrictEqual(classifyLog(line), {
       type: "unknown",
-      raw: line
+      raw: line,
     });
   });
 
@@ -56,7 +114,7 @@ END`;
     const cl = classifyLog(line);
     assert.deepStrictEqual(cl, {
       type: "event",
-      event: "CLIENT_DISCONNECT",
+      event: "REMOTE_EXIT",
       raw: "unknown",
     });
   });
@@ -79,8 +137,77 @@ END`;
 
     const parsed = parseClientMetadata(raw);
     assert.deepStrictEqual(parsed, [
+      ["clientID", "1"],
       ["untrusted_ip", "192.168.1.1"],
       ["common_name", "bob"],
     ]);
+  });
+
+  it("parseClientMetadata parses CID and KID for CONNECT/REAUTH", () => {
+    const raw = [
+      ">CLIENT:CONNECT,7,42",
+      "common_name=bob",
+      ">CLIENT:ENV,END",
+    ].join("\r\n");
+
+    const parsed = parseClientMetadata(raw);
+    assert.deepStrictEqual(parsed, [
+      ["clientID", "7"],
+      ["keyId", "42"],
+      ["common_name", "bob"],
+    ]);
+  });
+
+  it("parseLog parses timestamp, flags and message", () => {
+    assert.deepStrictEqual(
+      parseLog(">LOG:1710000000,W,client disconnected unexpectedly"),
+      {
+        timestamp: 1710000000,
+        flags: "W",
+        message: "client disconnected unexpectedly",
+      },
+    );
+  });
+
+  it("parseHold parses message", () => {
+    assert.strictEqual(
+      parseHold(">HOLD:Waiting for hold release"),
+      "Waiting for hold release",
+    );
+  });
+
+  it("parsePassword parses challenge request", () => {
+    assert.deepStrictEqual(
+      parsePassword(">PASSWORD:Need 'Auth' username/password SC:1,Enter PIN"),
+      {
+        message: "Need 'Auth' username/password SC:1,Enter PIN",
+        token: "Auth",
+        isNeed: true,
+        isVerificationFailed: false,
+        staticChallenge: {
+          echo: true,
+          text: "Enter PIN",
+        },
+      },
+    );
+  });
+
+  it("parsePassword parses verification failure", () => {
+    assert.deepStrictEqual(
+      parsePassword(">PASSWORD:Verification Failed: 'Private Key'"),
+      {
+        message: "Verification Failed: 'Private Key'",
+        token: "Private Key",
+        isNeed: false,
+        isVerificationFailed: true,
+        staticChallenge: undefined,
+      },
+    );
+  });
+
+  it("parseRsaSign parses payload", () => {
+    assert.deepStrictEqual(parseRsaSign(">RSA_SIGN:Zm9v"), {
+      base64Data: "Zm9v",
+    });
   });
 });
